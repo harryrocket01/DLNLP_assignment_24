@@ -1,31 +1,32 @@
-import ...
+import subprocess
+import sys
 
-# ======================================================================================================================
-# Data preprocessing
-data_train, data_val, data_test = data_preprocessing(args...)
-# ======================================================================================================================
-# Task A
-model_A = A(args...)                 # Build model object.
-acc_A_train = model_A.train(args...) # Train model based on the training set (you should fine-tune your model based on validation set.)
-acc_A_test = model_A.test(args...)   # Test model based on the test set.
-Clean up memory/GPU etc...             # Some code to free memory if necessary.
+subprocess.check_call([sys.executable, "-m", "pip", "install", "pandas"])
 
 
-# ======================================================================================================================
-# Task B
-model_B = B(args...)
-acc_B_train = model_B.train(args...)
-acc_B_test = model_B.test(args...)
-Clean up memory/GPU etc...
+import pandas as pd
+import json
+
+pd.set_option("display.max_columns", 999)
+pd.set_option("display.width", 999)
 
 
+file_path = "Dataset/github-typo-corpus.v1.0.0.jsonl"
 
+data_list = []
 
-# ======================================================================================================================
-## Print out your results with following format:
-print('TA:{},{};TB:{},{};'.format(acc_A_train, acc_A_test,
-                                                        acc_B_train, acc_B_test))
+with open(file_path, "r", encoding="utf-8") as file:
+    for line in file:
+        json_data = json.loads(line.strip())
+        data_list.append(json_data)
 
-# If you are not able to finish a task, fill the corresponding variable with 'TBD'. For example:
-# acc_A_train = 'TBD'
-# acc_B_test = 'TBD'
+df = pd.DataFrame(data_list)
+df_normalized = pd.concat(
+    [df.drop(columns=["edits"]), pd.json_normalize(df["edits"].explode())], axis=1
+)
+
+df_normalized = df_normalized[df_normalized["tgt.lang"].isin(["eng"])]
+
+print(df_normalized)
+print(df_normalized.columns.values.tolist())
+print(df_normalized[["src.text", "tgt.text", "is_typo"]])
