@@ -63,7 +63,6 @@ class TokaniseAndEncode:
 
     def tokenise(self, input_text):
         "Character-based tokenization"
-        # For demonstration purposes, let's just split the input text into characters
         tokens = list(input_text)
         return tokens
 
