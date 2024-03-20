@@ -131,7 +131,6 @@ class DataSynthesizer:
         """Remove unwanted characters and extra spaces from the text"""
         text = re.sub(r"([?.!,¿])", r" \1 ", text)
         text = re.sub(r'[" "]+', " ", text)
-
         text = re.sub(r"\n", " ", text)
         text = re.sub(r"[{}@\"_*>()\\#%+=\[\]]", "", text)
         text = re.sub("'", "", text)

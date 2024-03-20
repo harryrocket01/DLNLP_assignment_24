@@ -21,7 +21,7 @@ class Seq2SeqModel:
         num_examples = 30000
 
         # Figure out
-        self.input_data, self.output_data, self.vocab = [], [], {}
+        self.test_data, self.val_data, self.vocab = None, None, None
 
         self.example_input_batch, self.example_target_batch = next(
             iter(self.input_data)
@@ -40,6 +40,7 @@ class Seq2SeqModel:
             self.embedding_dim,
             self.units,
             self.batch_size,
+            self.max_length_input,
             "luong",
         )
         self.encoder = Encoder(
@@ -52,6 +53,11 @@ class Seq2SeqModel:
         self.input_data = input_data if input_data is not None else self.input_data
         self.output_data = output_data if output_data is not None else self.output_data
         self.vocab = vocab if vocab is not None else self.vocab
+
+        self.vocab_inp_size = len(self.vocab) + 1
+        self.vocab_tar_size = len(self.vocab) + 1
+        self.max_length_input = self.example_input_batch.shape[1]
+        self.max_length_output = self.example_target_batch.shape[1]
 
     def test_encoder(self):
         sample_hidden = self.encoder.initialize_hidden_state()
@@ -190,9 +196,16 @@ class Encoder(tf.keras.Model):
 
 class Decoder(tf.keras.Model):
     def __init__(
-        self, vocab_size, embedding_dim, dec_units, batch_sz, attention_type="luong"
+        self,
+        vocab_size,
+        embedding_dim,
+        dec_units,
+        batch_sz,
+        max_length_input,
+        attention_type="luong",
     ):
         super(Decoder, self).__init__()
+        self.max_length_input = max_length_input
         self.batch_sz = batch_sz
         self.dec_units = dec_units
         self.attention_type = attention_type
@@ -267,6 +280,6 @@ class Decoder(tf.keras.Model):
         outputs, _, _ = self.decoder(
             x,
             initial_state=initial_state,
-            sequence_length=self.batch_sz * [max_length_output - 1],
+            sequence_length=self.batch_sz * [self.max_length_output - 1],
         )
         return outputs
