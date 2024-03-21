@@ -12,7 +12,7 @@ import tensorflow_text as tf_text
 from sklearn.model_selection import train_test_split
 
 np.random.seed(1234)
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 class Vocabularay:
@@ -161,8 +161,8 @@ class TokeniseAndEncode:
         text = tf.strings.regex_replace(text, "a-z.?!,-", "")
         text = tf.strings.regex_replace(text, ".?!,-", r" \0 ")
         text = tf.strings.strip(text)
-        #[ is SOS and ] is EOS
-        text = tf.strings.join(["[", text, "]"], separator=" ")
+        # [ is SOS and ] is EOS
+        text = tf.strings.join(["[", text, "]"], separator="")
         return text
 
     def convert_to_tensor_format(self, input_arr, output_arr, buffer_size):

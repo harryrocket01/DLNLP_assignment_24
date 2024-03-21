@@ -40,8 +40,8 @@ class FileRead:
 
         return data_dict
 
-    def read_tsv(self, root):
-        df = pd.read_csv(root, sep="\t")
+    def read_tsv(self, root, rows=100000):
+        df = pd.read_csv(root, sep="\t", nrows=rows)
         return df
 
 
@@ -90,14 +90,20 @@ class DataSynthesizer:
 
         return self.mispell_dict
 
-    def create_misspell_corpus(self, root, file_name="Misspelling_Corpus.csv"):
+    def create_misspell_corpus(
+        self,
+        root,
+        unique_sentences=1000,
+        sentence_variation=100,
+        file_name="Misspelling_Corpus.csv",
+    ):
 
         if os.path.isfile(root) == False:
             print("Missing File at Root")
             print({root})
             return None
 
-        sentence_dataframe = FileRead().read_tsv(root)
+        sentence_dataframe = FileRead().read_tsv(root, rows=unique_sentences)
         sentence_dataframe = sentence_dataframe.drop(
             ["SOURCE", "TERM", "SCORE", "QUANTIFIER"], axis=1
         )
@@ -108,6 +114,10 @@ class DataSynthesizer:
             self.format_to_vocab
         )
         sentence_dataframe["Misspelt"] = sentence_dataframe["Original"]
+
+        sentence_dataframe = sentence_dataframe.loc[
+            sentence_dataframe.index.repeat(sentence_variation)
+        ].reset_index(drop=True)
 
         sentence_dataframe["Misspelt"] = sentence_dataframe["Misspelt"].apply(
             self.mispell

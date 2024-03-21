@@ -13,9 +13,8 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 import tensorflow as tf
+import tensorflow_text as tf_text
 import keras
-
-# import tensorflow_text as tf_text
 import einops
 
 
@@ -67,7 +66,7 @@ class Seq2SeqModel:
 
     def train_model(self, epochs=100):
 
-        self.model.evaluate(self.val, steps=20, return_dict=True)
+        # self.model.evaluate(self.val, steps=20, return_dict=True)
 
         checkpoint_dir = os.path.dirname(self.checkpoint_path)
 
@@ -91,24 +90,24 @@ class Seq2SeqModel:
     def load_model(self):
         self.model.load_weights(self.save_path)
 
-        self.model.spell_check(["hello my neme is Harry."])
+        self.model.spell_check(["abductors pray upon children who vook depressed."])
+        self.model.plot_attention("abductors pray upon children who vook depressed.")
+        plt.show()
 
     def masked_loss(self, y_true, y_pred):
-        # Calculate the loss for each item in the batch.
+        # Calculate the loss for each item in the batch
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction="none"
         )
         loss = loss_fn(y_true, y_pred)
 
-        # Mask off the losses on padding.
+        # Mask off the losses on padding
         mask = tf.cast(y_true != 0, loss.dtype)
         loss *= mask
 
-        # Return the total.
         return tf.reduce_sum(loss) / tf.reduce_sum(mask)
 
     def masked_acc(self, y_true, y_pred):
-        # Calculate the loss for each item in the batch.
         y_pred = tf.argmax(y_pred, axis=-1)
         y_pred = tf.cast(y_pred, y_true.dtype)
 
@@ -125,17 +124,13 @@ class Encoder(tf.keras.layers.Layer):
         self.vocab_size = text_processor.vocabulary_size()
         self.units = units
 
-        # The embedding layer converts tokens to vectors
         self.embedding = tf.keras.layers.Embedding(
             self.vocab_size, units, mask_zero=True
         )
-
-        # The RNN layer processes those vectors sequentially.
         self.rnn = tf.keras.layers.Bidirectional(
             merge_mode="sum",
             layer=tf.keras.layers.GRU(
                 units,
-                # Return the sequence and state
                 return_sequences=True,
                 recurrent_initializer="glorot_uniform",
             ),
@@ -211,8 +206,9 @@ class Decoder(tf.keras.layers.Layer):
             oov_token="[UNK]",
             invert=True,
         )
-        self.start_token = self.word_to_id("[START]")
-        self.end_token = self.word_to_id("[END]")
+
+        self.start_token = self.word_to_id("[")
+        self.end_token = self.word_to_id("]")
 
         self.units = units
 
@@ -272,9 +268,9 @@ class Decoder(tf.keras.layers.Layer):
 
     def tokens_to_text(self, tokens):
         words = self.id_to_word(tokens)
-        result = tf.strings.reduce_join(words, axis=-1, separator=" ")
-        result = tf.strings.regex_replace(result, "^ *\[START\] *", "")
-        result = tf.strings.regex_replace(result, " *\[END\] *$", "")
+        result = tf.strings.reduce_join(words, axis=-1, separator="")
+        # result = tf.strings.regex_replace(result, "[", "")
+        # result = tf.strings.regex_replace(result, "]", "")
         return result
 
     def get_next_token(self, context, next_token, done, state, temperature=0.0):
@@ -319,7 +315,7 @@ class SpellChecker(tf.keras.Model):
 
         return logits
 
-    def spell_check(self, texts, *, max_length=50, temperature=0.0):
+    def spell_check(self, texts, *, max_length=100, temperature=0.0):
 
         context = self.encoder.convert_input(texts)
         batch_size = tf.shape(texts)[0]
@@ -346,13 +342,59 @@ class SpellChecker(tf.keras.Model):
 
         result = self.decoder.tokens_to_text(tokens)
         print(result[0].numpy().decode())
+        print(result.numpy())
         return result
+
+    def plot_attention(self, text, **kwargs):
+        assert isinstance(text, str)
+        output = self.spell_check([text], **kwargs)
+        output = output[0].numpy().decode()
+
+        attention = self.last_attention_weights[0]
+
+        context = self.tf_lower_and_split_punct(text)
+        print(context, output)
+
+        context = list(context.numpy().decode())
+        print(context, output)
+
+        output = self.tf_lower_and_split_punct(output)
+        output = list(output.numpy().decode()[1:])
+
+        print(context, output)
+
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(1, 1, 1)
+
+        ax.matshow(attention, cmap="viridis", vmin=0.0)
+
+        fontdict = {"fontsize": 14}
+
+        ax.set_xticklabels(context, fontdict=fontdict, rotation=90)
+        ax.set_yticklabels(output, fontdict=fontdict)
+
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+        ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+
+        ax.set_xlabel("Input text")
+        ax.set_ylabel("Output text")
+
+    def tf_lower_and_split_punct(self, text):
+        # Split accented characters.
+        text = tf_text.normalize_utf8(text, "NFKD")
+        text = tf.strings.lower(text)
+        text = tf.strings.regex_replace(text, "a-z.?!,-", "")
+        text = tf.strings.regex_replace(text, ".?!,-", r" \0 ")
+        text = tf.strings.strip(text)
+        # [ is SOS and ] is EOS
+
+        text = tf.strings.join(["[", text, "]"], separator="")
+        return text
 
 
 # @title
 class ShapeChecker:
     def __init__(self):
-        # Keep a cache of every axis-name seen
         self.shapes = {}
 
     def __call__(self, tensor, names, broadcast=False):
@@ -368,7 +410,6 @@ class ShapeChecker:
                 continue
 
             if old_dim is None:
-                # If the axis name is new, add its length to the cache.
                 self.shapes[name] = new_dim
                 continue
 

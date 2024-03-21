@@ -1,3 +1,10 @@
+import os
+import subprocess
+import sys
+
+subprocess.check_call([sys.executable, "-m", "pip", "install", "tensorflow-addons"])
+
+
 import tensorflow as tf
 import tensorflow as tf
 import tensorflow_addons as tfa
