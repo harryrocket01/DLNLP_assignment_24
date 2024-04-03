@@ -3,6 +3,9 @@ import re
 import random
 import pandas as pd
 import os
+import requests
+import shutil
+import zipfile
 
 
 class FileRead:
@@ -40,7 +43,7 @@ class FileRead:
 
         return data_dict
 
-    def read_tsv(self, root, rows=100000):
+    def read_tsv(self, root, rows=1000000):
         df = pd.read_csv(root, sep="\t", nrows=rows)
         return df
 
@@ -53,6 +56,50 @@ class DataSynthesizer:
         self.mistake_freq = {0: 0, 1: 10, 2: 4, 3: 2, 4: 1, 5: 1}
 
         self.mispell_dict = {}
+
+    def download_files(self):
+        file_id = "1bK6PvtUpluk-4WIpEhs7p2c3vy5AVwVG"
+        url = f"https://drive.usercontent.google.com/download?id=1bK6PvtUpluk-4WIpEhs7p2c3vy5AVwVG&export=download&authuser=0&confirm=t&uuid=0050d7b2-f732-42fd-a356-fafc4aa33e4f&at=APZUnTW3LQrDM25YzKQbJIzb42qL%3A1712155394334"
+        zip_filename = f"{file_id}.zip"
+        print("Fetching Zip")
+        try:
+            with requests.get(url, stream=True) as r:
+                with open(zip_filename, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+        except Exception as e:
+            print(f"Error downloading file: {e}")
+            return
+
+        with open(zip_filename, "rb") as f:
+            file_header = f.read(1024)
+        if b"DOCTYPE html" in file_header:
+            print("Downloaded file is the warning page HTML, not the actual file.")
+            os.remove(zip_filename)  # Remove the HTML file
+            return
+
+        print("Extracting Zip")
+        extract_to = "./Dataset"
+        try:
+            if not os.path.exists(extract_to):
+                os.makedirs(extract_to)
+
+            with zipfile.ZipFile(zip_filename, "r") as zip_ref:
+                zip_ref.extractall(extract_to)
+        except Exception as e:
+            print(f"Error extracting zip file: {e}")
+            return
+
+        print("Cleaning up files")
+        # Remove the zip file
+        try:
+            os.remove(zip_filename)
+        except Exception as e:
+            print(f"Error removing zip file: {e}")
+            return
+
+        print("Completed")
 
     def set_root(self, root):
         for path in root:
@@ -93,8 +140,8 @@ class DataSynthesizer:
     def create_misspell_corpus(
         self,
         root,
-        unique_sentences=1000,
-        sentence_variation=100,
+        unique_sentences=2000,
+        sentence_variation=50,
         file_name="Misspelling_Corpus.csv",
     ):
 
@@ -103,7 +150,18 @@ class DataSynthesizer:
             print({root})
             return None
 
-        sentence_dataframe = FileRead().read_tsv(root, rows=unique_sentences)
+        sentence_dataframe = FileRead().read_tsv(root)
+        # shuffle and sort
+        sentence_dataframe = (
+            sentence_dataframe.sample(frac=1, random_state=76)  # Shuffle the DataFrame
+            .reset_index(drop=True)  # Reset the index
+            .sort_values(by="SCORE", ascending=False)  # Sort by the "SCORE" column
+            .reset_index(drop=True)  # Reset the index again
+        )
+
+        sentence_dataframe = sentence_dataframe.head(unique_sentences)
+
+        print(sentence_dataframe)
         sentence_dataframe = sentence_dataframe.drop(
             ["SOURCE", "TERM", "SCORE", "QUANTIFIER"], axis=1
         )
