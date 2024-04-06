@@ -46,7 +46,7 @@ class BenchMark:
 
     def check_nor(self, sentences):
         """
-        It uses a Levenshtein Distance algorithmthe frequency list are more likely the correct results.
+        It uses a Levenshtein Distance algorithmth frequency list are more likely the correct results.
         """
         spell = SpellChecker(distance=self.N)
         predicts = []
