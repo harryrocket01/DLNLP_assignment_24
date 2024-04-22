@@ -8,7 +8,7 @@ import numpy as np
 import re
 import pandas as pd
 import tensorflow as tf
-import tensorflow_text as tf_text
+#import tensorflow_text as tf_text
 from sklearn.model_selection import train_test_split
 
 np.random.seed(1234)

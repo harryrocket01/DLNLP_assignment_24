@@ -1,25 +1,36 @@
-import tensorflow as tf
-import tensorflow_addons as tfa
+import os
 
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+import tensorflow as tf
+
 from sklearn.model_selection import train_test_split
 
 import unicodedata
 import re
-import numpy as np
 import pandas as pd
-import os
-import io
-import time
 
 
 class DataProcessing:
+    """
+    class: Encoder
+
+    ~~ DESC ~~
+    args:
+
+    methods:
+
+    Attributes:
+
+    Example:
+
+    """
+
     def __init__(self):
         self.inp_lang_tokenizer = None
         self.targ_lang_tokenizer = None
+        self.max_seq = None
 
-    ## Step 1 and Step 2
     def sentence_processing(self, sentence):
         sentence = sentence.lower().strip()
         sentence = self.unicode_to_ascii(sentence)
@@ -47,10 +58,14 @@ class DataProcessing:
         lang_tokenizer.fit_on_texts(targ_lang)
 
         tensor = lang_tokenizer.texts_to_sequences(inp_lang)
-        tensor = tf.keras.preprocessing.sequence.pad_sequences(tensor, padding="post")
+        tensor = tf.keras.preprocessing.sequence.pad_sequences(
+            tensor, padding="post", maxlen=self.max_seq
+        )
 
         tensor2 = lang_tokenizer.texts_to_sequences(targ_lang)
-        tensor2 = tf.keras.preprocessing.sequence.pad_sequences(tensor, padding="post")
+        tensor2 = tf.keras.preprocessing.sequence.pad_sequences(
+            tensor2, padding="post", maxlen=self.max_seq
+        )
 
         return tensor, lang_tokenizer, tensor2, lang_tokenizer
 
@@ -58,10 +73,15 @@ class DataProcessing:
         df = pd.read_csv(root, nrows=num_examples)
         df["Original"] = df["Original"].apply(self.sentence_processing)
         df["Misspelt"] = df["Misspelt"].apply(self.sentence_processing)
+        original_length = df["Original"].apply(len).max()
+        misspelt_length = df["Misspelt"].apply(len).max()
+        self.max_seq = max(original_length, misspelt_length) + 1
 
         targ_lang = df["Original"].values
 
         inp_lang = df["Misspelt"].values
+
+        print("Maxlen", self.max_seq)
 
         input_tensor, inp_lang_tokenizer, target_tensor, targ_lang_tokenizer = (
             self.tokenize(inp_lang, targ_lang)
@@ -69,7 +89,7 @@ class DataProcessing:
 
         return input_tensor, target_tensor, inp_lang_tokenizer, targ_lang_tokenizer
 
-    def call(self, num_examples, buffer_size, batch_size):
+    def call_train_val(self, num_examples, buffer_size, batch_size):
 
         (
             input_tensor,
@@ -100,3 +120,38 @@ class DataProcessing:
             self.inp_lang_tokenizer,
             self.targ_lang_tokenizer,
         )
+
+    def call_test(
+        self,
+        buffer_size,
+        batch_size,
+        inp_lang_tokenizer,
+        targ_lang_tokenizer,
+        root=".\Dataset\Test_Set.csv",
+    ):
+
+        df = pd.read_csv(root)
+        df["Original"] = df["Original"].apply(self.sentence_processing)
+        df["Misspelt"] = df["Misspelt"].apply(self.sentence_processing)
+
+        targ_lang = df["Original"].values
+
+        inp_lang = df["Misspelt"].values
+
+        tensor = self.inp_lang_tokenizer.texts_to_sequences(inp_lang)
+        tensor = tf.keras.preprocessing.sequence.pad_sequences(
+            tensor, padding="post", maxlen=self.max_seq
+        )
+
+        tensor2 = self.targ_lang_tokenizer.texts_to_sequences(targ_lang)
+
+        tensor2 = tf.keras.preprocessing.sequence.pad_sequences(
+            tensor2, padding="post", maxlen=self.max_seq
+        )
+
+        test_dataset = tf.data.Dataset.from_tensor_slices((tensor, tensor2))
+        test_dataset = test_dataset.shuffle(buffer_size).batch(
+            batch_size, drop_remainder=True
+        )
+
+        return test_dataset

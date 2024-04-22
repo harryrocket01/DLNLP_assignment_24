@@ -20,6 +20,19 @@ import time
 
 
 class SeqAttention:
+    """
+    class: SeqAttention
+
+    ~~ DESC ~~
+    args:
+
+    methods:
+
+    Attributes:
+
+    Example:
+
+    """
 
     def __init__(
         self,
@@ -27,30 +40,46 @@ class SeqAttention:
         batch_size=128,
         num_examples=1000,
         checkpoint_dir="./B/training_checkpoints",
+        attention_type="luong",
+        encoder_cell="LSTM",
+        decoder_cell="LSTM",
     ):
-
         self.buffer = buffer
         self.batch_size = batch_size
         self.num_examples = num_examples
 
         self.data_processing_inst = DataProcessing()
-        self.train_dataset, self.val_dataset, self.inp_lang, self.targ_lang = (
-            self.data_processing_inst.call(num_examples, self.buffer, self.batch_size)
+        self.train_dataset, self.val_dataset, self.inp_token, self.targ_token = (
+            self.data_processing_inst.call_train_val(
+                num_examples, self.buffer, self.batch_size
+            )
         )
 
-        for word, index in self.inp_lang.word_index.items():
+        print(self.train_dataset)
+        print(self.val_dataset)
+
+        self.test_dataset = self.data_processing_inst.call_test(
+            self.buffer,
+            self.batch_size,
+            self.inp_token,
+            self.targ_token,
+            root=".\Dataset\Test_Set.csv",
+        )
+        print(self.test_dataset)
+
+        for word, index in self.inp_token.word_index.items():
             print(f"Word: {word}, Index: {index}")
 
         # check if needed
         example_input_batch, example_target_batch = next(iter(self.train_dataset))
         example_input_texts = [
-            self.inp_lang.sequences_to_texts([sequence.numpy()])[0]
+            self.inp_token.sequences_to_texts([sequence.numpy()])[0]
             for sequence in example_input_batch
         ]
 
-        """### Some important parameters"""
-        self.vocab_inp_size = len(self.inp_lang.word_index) + 1
-        self.vocab_tar_size = len(self.targ_lang.word_index) + 1
+        # constants and variables used within making the model dynamically
+        self.vocab_inp_size = len(self.inp_token.word_index) + 1
+        self.vocab_tar_size = len(self.targ_token.word_index) + 1
         self.max_length_input = example_input_batch.shape[1]
         self.max_length_output = example_target_batch.shape[1]
 
@@ -58,22 +87,13 @@ class SeqAttention:
         self.units = 1024
         self.steps_per_epoch = num_examples // self.batch_size
 
-        #####
-
-        ## Test Encoder Stack
-
+        # Encoder & Decoder Stack
         self.encoder = Encoder(
             self.vocab_inp_size,
             self.embedding_dimentions,
             self.units,
             self.batch_size,
-            encoder_cell="LSTM",
-        )
-
-        # check if needed
-        sample_hidden = self.encoder.initialize_hidden_state()
-        sample_output, sample_h, sample_c = self.encoder(
-            example_input_batch, sample_hidden
+            encoder_cell=encoder_cell,
         )
 
         self.decoder = Decoder(
@@ -83,34 +103,33 @@ class SeqAttention:
             self.batch_size,
             self.max_length_input,
             self.max_length_output,
+            attention_type=attention_type,
+            decoder_cell=decoder_cell,
         )
 
-        # check if needed
-        sample_x = tf.random.uniform((self.batch_size, self.max_length_output))
-        self.decoder.attention_mechanism.setup_memory(sample_output)
-        initial_state = self.decoder.build_initial_state(
-            self.batch_size, [sample_h, sample_c], tf.float32
-        )
-        sample_decoder_outputs = self.decoder(sample_x, initial_state)
-
-        """## Define the optimizer and the loss function"""
-        # selected optimizer
+        # selected
         self.optimizer = tf.keras.optimizers.Adam()
 
-        """## Checkpoints (Object-based saving)"""
-
+        # Setting up checkpoint directory
         self.checkpoint_dir = checkpoint_dir
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, "ckpt")
         self.checkpoint = tf.train.Checkpoint(
             optimizer=self.optimizer, encoder=self.encoder, decoder=self.decoder
         )
 
-        """## One train_step operations"""
+    def train(self, epochs):
+        """
+        method: train
 
-    def train(self):
-        """## Train the model"""
+        ~~ DESC ~~
 
-        EPOCHS = 5
+        args:
+
+        return:
+
+        Example:
+
+        """
 
         # Lists to store additional variables
         losses = []
@@ -118,7 +137,7 @@ class SeqAttention:
         val_losses = []
         val_accuracies = []
 
-        for epoch in range(EPOCHS):
+        for epoch in range(epochs):
             start = time.time()
 
             enc_hidden = self.encoder.initialize_hidden_state()
@@ -187,32 +206,57 @@ class SeqAttention:
         print("Validation Losses:", val_losses)
         print("Validation Accuracies:", val_accuracies)
 
+        test_total_loss = 0
+        test_total_accuracy = 0
+        num_test_batches = 0
+
+        for test_inp, test_targ in self.test_dataset:
+            test_batch_loss, test_batch_acc = self.validation_step(
+                test_inp, test_targ, enc_hidden
+            )
+            test_total_loss += test_batch_loss
+            test_total_accuracy += test_batch_acc
+            num_test_batches += 1
+
+        test_loss = test_total_loss / num_test_batches
+        test_acc = test_total_accuracy / num_test_batches
+
+        print("Test Loss {:.4f}, Test Accuracy {:.4f}".format(test_loss, test_acc))
+
     def test(self):
-        """## Use tf-addons BasicDecoder for decoding"""
+        """
+        method: test
 
-        """## Restore the latest checkpoint and test"""
+        ~~ DESC ~~
 
-        # restoring the latest checkpoint in checkpoint_dir
-        self.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir))
+        args:
 
-        self.spellcheck("aa batteries maintain the settings if the power ever gos off.")
+        return:
 
-        self.spellcheck("aardvark females appear tobe come ointo season once per yaer.")
-
-        self.spellcheck("mosy aardvarks have lnog snouts.")
-
-        self.spellcheck("abdominal paine is relieved by defecation.")
-
-        """## Use tf-addons BeamSearchDecoder
+        Example:
 
         """
-
-        self.beam_spellcheck("mosy aardvarks have lnog snouts.")
-
-        self.beam_spellcheck("abdominal paine is relieved by defecation.")
+        self.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir))
+        while True:
+            to_conv = input()
+            self.spellcheck(to_conv)
+            self.beam_spellcheck(to_conv)
 
     @tf.function
     def train_step(self, inp, targ, enc_hidden):
+        """
+        method: train_step
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
+
         loss = 0
         acc = 0
 
@@ -240,6 +284,19 @@ class SeqAttention:
 
     @tf.function
     def validation_step(self, inp, targ, enc_hidden):
+        """
+        method: validation_step
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
+
         loss = 0
         acc = 0
 
@@ -274,6 +331,18 @@ class SeqAttention:
         return loss
 
     def masked_accuracy(self, real, pred):
+        """
+        method: masked_accuracy
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
         # Ignore padding tokens
         mask = tf.math.logical_not(tf.math.equal(real, 0))
         mask = tf.cast(mask, dtype=tf.float32)
@@ -289,16 +358,27 @@ class SeqAttention:
         return accuracy
 
     def evaluate_sentence(self, sentence):
+        """
+        method: evaluate_sentence
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
         sentence = self.data_processing_inst.sentence_processing(sentence)
 
         # Tokenize input sentence at the character level
-        inputs = [self.inp_lang.word_index[char] for char in sentence]
+        inputs = [self.inp_token.word_index[char] for char in sentence]
         inputs = tf.keras.preprocessing.sequence.pad_sequences(
             [inputs], maxlen=self.max_length_input, padding="post"
         )
         inputs = tf.convert_to_tensor(inputs)
         inference_batch_size = inputs.shape[0]
-        result = ""
 
         enc_start_state = [
             tf.zeros((inference_batch_size, self.units)),
@@ -306,29 +386,25 @@ class SeqAttention:
         ]
         enc_out, enc_h, enc_c = self.encoder(inputs, enc_start_state)
 
-        dec_h = enc_h
-        dec_c = enc_c
+        start_tokens = tf.fill([inference_batch_size], self.targ_token.word_index["<"])
+        end_token = self.targ_token.word_index[">"]
 
-        start_tokens = tf.fill([inference_batch_size], self.targ_lang.word_index["<"])
-        end_token = self.targ_lang.word_index[">"]
-
+        # Enables greedy sampling
         greedy_sampler = tfa.seq2seq.GreedyEmbeddingSampler()
 
-        # Instantiate BasicDecoder object
+        # use basic decoder
         decoder_instance = tfa.seq2seq.BasicDecoder(
             cell=self.decoder.rnn_cell,
             sampler=greedy_sampler,
             output_layer=self.decoder.fc,
         )
-
-        # Setup Memory and inital state in decoder
         self.decoder.attention_mechanism.setup_memory(enc_out)
         decoder_initial_state = self.decoder.build_initial_state(
             inference_batch_size, [enc_h, enc_c], tf.float32
         )
         decoder_embedding_matrix = self.decoder.embedding.variables[0]
 
-        # decode
+        # decode output and return array
         outputs, _, _ = decoder_instance(
             decoder_embedding_matrix,
             start_tokens=start_tokens,
@@ -338,21 +414,44 @@ class SeqAttention:
         return outputs.sample_id.numpy()
 
     def spellcheck(self, sentence):
+        """
+        method: spellcheck
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
         result = self.evaluate_sentence(sentence)
-        result_text = self.targ_lang.sequences_to_texts(result)
+        result_text = self.targ_token.sequences_to_texts(result)
         print("Input: %s" % (sentence))
-        print("Predicted translation: {}".format(result_text))
+        print("Predicted sentence: {}".format(result_text))
 
     def beam_evaluate_sentence(self, sentence, beam_width=3):
+        """
+        method: beam_evaluate_sentence
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
         sentence = self.data_processing_inst.sentence_processing(sentence)
 
-        inputs = [self.inp_lang.word_index[char] for char in sentence]
+        inputs = [self.inp_token.word_index[char] for char in sentence]
         inputs = tf.keras.preprocessing.sequence.pad_sequences(
             [inputs], maxlen=self.max_length_input, padding="post"
         )
         inputs = tf.convert_to_tensor(inputs)
         inference_batch_size = inputs.shape[0]
-        result = ""
 
         enc_start_state = [
             tf.zeros((inference_batch_size, self.units)),
@@ -360,11 +459,8 @@ class SeqAttention:
         ]
         enc_out, enc_h, enc_c = self.encoder(inputs, enc_start_state)
 
-        dec_h = enc_h
-        dec_c = enc_c
-
-        start_tokens = tf.fill([inference_batch_size], self.targ_lang.word_index["<"])
-        end_token = self.targ_lang.word_index[">"]
+        start_tokens = tf.fill([inference_batch_size], self.targ_token.word_index["<"])
+        end_token = self.targ_token.word_index[">"]
 
         enc_out = tfa.seq2seq.tile_batch(enc_out, multiplier=beam_width)
         self.decoder.attention_mechanism.setup_memory(enc_out)
@@ -403,13 +499,25 @@ class SeqAttention:
         return final_outputs.numpy(), beam_scores.numpy()
 
     def beam_spellcheck(self, sentence):
-        result, beam_scores = self.beam_evaluate_sentence(sentence)
-        print(result.shape, beam_scores.shape)
-        for beam, score in zip(result, beam_scores):
+        """
+        method: beam_spellcheck
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
+        result, score_arr = self.beam_evaluate_sentence(sentence)
+
+        for beam, score in zip(result, score_arr):
             print(beam.shape, score.shape)
-            output = self.targ_lang.sequences_to_texts(beam)
-            output = [a[: a.index(">")] for a in output]
-            beam_score = [a.sum() for a in score]
+            output = self.targ_token.sequences_to_texts(beam)
+            output = [i[: i.index(">")] for i in output]
+            beam_score = [j.sum() for j in score]
             print("Input: %s" % (sentence))
             for i in range(len(output)):
                 print(
@@ -419,6 +527,14 @@ class SeqAttention:
                 )
 
 
-inst = SeqAttention()
-SeqAttention().train()
-SeqAttention().test()
+inst = SeqAttention(
+    buffer=1000000,
+    batch_size=64,
+    num_examples=1000,
+    checkpoint_dir="./B/training_checkpoints",
+    attention_type="luong",
+    encoder_cell="LSTM",
+    decoder_cell="LSTM",
+)
+inst.train(epochs=2)
+inst.test()

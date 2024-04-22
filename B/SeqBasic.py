@@ -20,20 +20,29 @@ class Seq2SeqModel:
 
         # Initialize data processing and obtain datasets
         self.data_processing_inst = DataProcessing()
-        self.train_dataset, self.val_dataset, self.inp_lang, self.targ_lang = (
-            self.data_processing_inst.call(num_examples, self.buffer, self.batch_size)
+        self.train_dataset, self.val_dataset, self.inp_token, self.targ_token = (
+            self.data_processing_inst.call_train_val(
+                num_examples, self.buffer, self.batch_size
+            )
+        )
+        self.test_dataset = self.data_processing_inst.call_test(
+            self.buffer,
+            self.batch_size,
+            self.inp_token,
+            self.targ_token,
+            root=".\Dataset\Test_Set.csv",
         )
 
         # Print vocabulary information
-        for word, index in self.inp_lang.word_index.items():
+        for word, index in self.inp_token.word_index.items():
             print(f"Word: {word}, Index: {index}")
 
         # Example input batch to determine parameters
         example_input_batch, example_target_batch = next(iter(self.train_dataset))
 
         # Some important parameters
-        self.vocab_inp_size = len(self.inp_lang.word_index) + 1
-        self.vocab_tar_size = len(self.targ_lang.word_index) + 1
+        self.vocab_inp_size = len(self.inp_token.word_index) + 1
+        self.vocab_tar_size = len(self.targ_token.word_index) + 1
         self.max_length_input = example_input_batch.shape[1]
         self.max_length_output = example_target_batch.shape[1]
         self.embedding_dim = 256
@@ -163,6 +172,22 @@ class Seq2SeqModel:
         print("Train Accuracies:", accuracies)
         print("Validation Losses:", val_losses)
         print("Validation Accuracies:", val_accuracies)
+        test_total_loss = 0
+        test_total_accuracy = 0
+        num_test_batches = 0
+
+        for val_inp, val_targ in self.test_set:
+            val_batch_loss, val_batch_acc = self.validation_step(
+                val_inp, val_targ, enc_hidden
+            )
+            val_total_loss += val_batch_loss
+            val_total_accuracy += val_batch_acc
+            num_val_batches += 1
+
+        test_loss = val_total_loss / num_val_batches
+        test_acc = val_total_accuracy / num_val_batches
+
+        print("Test Loss {:.4f}, Test Accuracy {:.4f}".format(test_loss, test_acc))
 
     def initialize_hidden_state(self):
         return [

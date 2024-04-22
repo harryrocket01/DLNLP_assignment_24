@@ -7,7 +7,8 @@ import os
 
 from A.data_synthesizer import DataSynthesizer
 from A.tokenise_and_encode import TokeniseAndEncode, Vocabularay
-from A.Model.seq_seq2 import Seq2SeqModel
+
+# from A.Model.seq_seq2 import Seq2SeqModel
 
 import pandas as pd
 import json
@@ -28,10 +29,10 @@ class FinalProject:
         self.context_text_processor = None
         self.target_text_processor = None
         self.create_data()
-        self.process_tv_set()
-        self.define_model()
+        # self.process_tv_set()
+        # self.define_model()
 
-    def create_data(self):
+    def create_data(self, download=False):
         file_name = "Misspelling_Corpus.csv"
         root = ".\Dataset\Sentences\GenericsKB-Best.tsv"
         mistake_root = [
@@ -45,18 +46,23 @@ class FinalProject:
             print("Dataset Already Created at root:")
             print(f"./Dataset/{file_name}")
             return 1
-        else:
-            DataSynthesizer().download_files()
 
         data_create = DataSynthesizer()
 
         root_flag = data_create.set_root(mistake_root)
 
         if root_flag is not None:
-            data_create.read_all()
-            data_create.create_misspell_corpus(
-                root, unique_sentences=2000, sentence_variation=500, file_name=file_name
-            )
+            if download == True:
+                DataSynthesizer().download_files()
+            else:
+                data_create.read_all()
+                data_create.create_misspell_corpus(
+                    root,
+                    unique_sentences=4000,
+                    sentence_variation=500,
+                    file_name=file_name,
+                )
+
         else:
             return 0
         return 1

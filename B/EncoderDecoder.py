@@ -2,21 +2,28 @@
 
 import tensorflow as tf
 import tensorflow_addons as tfa
-
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-from sklearn.model_selection import train_test_split
-
-import unicodedata
-import re
-import numpy as np
-import pandas as pd
 import os
-import io
-import time
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+from sklearn.model_selection import train_test_split
 
 
 class Encoder(tf.keras.Model):
+    """
+    class: Encoder
+
+    ~~ DESC ~~
+    args:
+
+    methods:
+
+    Attributes:
+
+    Example:
+
+    """
+
     def __init__(
         self, vocab_size, embedding_dim, enc_units, batch_sz, encoder_cell="LSTM"
     ):
@@ -60,6 +67,20 @@ class Encoder(tf.keras.Model):
 
 
 class Decoder(tf.keras.Model):
+    """
+    class: Encoder
+
+    ~~ DESC ~~
+    args:
+
+    methods:
+
+    Attributes:
+
+    Example:
+
+    """
+
     def __init__(
         self,
         vocab_size,

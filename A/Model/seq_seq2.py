@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 import tensorflow as tf
-import tensorflow_text as tf_text
+
+# import tensorflow_text as tf_text
 import keras
 import einops
 
