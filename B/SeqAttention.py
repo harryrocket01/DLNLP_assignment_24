@@ -534,7 +534,7 @@ inst = SeqAttention(
     checkpoint_dir="./B/training_checkpoints",
     attention_type="luong",
     encoder_cell="LSTM",
-    decoder_cell="LSTM",
+    decoder_cell="GRU",
 )
 inst.train(epochs=2)
-inst.test()
+# inst.test()

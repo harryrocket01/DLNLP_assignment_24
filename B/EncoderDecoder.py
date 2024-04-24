@@ -31,15 +31,15 @@ class Encoder(tf.keras.Model):
         self.batch_sz = batch_sz
         self.enc_units = enc_units
         self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
-
-        if encoder_cell == "RNN":
+        self.encoder_cell = encoder_cell
+        if self.encoder_cell == "RNN":
             self.encoder_layer = tf.keras.layers.SimpleRNN(
                 self.enc_units,
                 return_sequences=True,
                 return_state=True,
                 recurrent_initializer="glorot_uniform",
             )
-        elif encoder_cell == "GRU":
+        elif self.encoder_cell == "GRU":
             self.encoder_layer = tf.keras.layers.GRU(
                 self.enc_units,
                 return_sequences=True,
@@ -47,7 +47,7 @@ class Encoder(tf.keras.Model):
                 recurrent_initializer="glorot_uniform",
             )
         else:
-            self.lstm_layer = tf.keras.layers.LSTM(
+            self.encoder_layer = tf.keras.layers.LSTM(
                 self.enc_units,
                 return_sequences=True,
                 return_state=True,
@@ -56,7 +56,7 @@ class Encoder(tf.keras.Model):
 
     def call(self, x, hidden):
         x = self.embedding(x)
-        output, h, c = self.lstm_layer(x, initial_state=hidden)
+        output, h, c = self.encoder_layer(x, initial_state=hidden)
         return output, h, c
 
     def initialize_hidden_state(self):

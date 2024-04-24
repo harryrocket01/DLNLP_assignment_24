@@ -67,7 +67,7 @@ class DataProcessing:
         return tensor, lang_tokenizer, tensor2, lang_tokenizer
 
     def load_dataset(self, num_examples=None):
-        df = pd.read_csv(".\Dataset\Misspelling_Corpus.csv")
+        df = pd.read_csv(".\DatasetMisspelling_Corpus.csv")
         df["Original"] = df["Original"].apply(self.sentence_processing)
         df["Misspelt"] = df["Misspelt"].apply(self.sentence_processing)
 
