@@ -46,6 +46,8 @@ class FinalProject:
             print("Dataset Already Created at root:")
             print(f"./Dataset/{file_name}")
             return 1
+        elif download == True:
+            DataSynthesizer().download_files()
 
         data_create = DataSynthesizer()
 
@@ -58,8 +60,8 @@ class FinalProject:
                 data_create.read_all()
                 data_create.create_misspell_corpus(
                     root,
-                    unique_sentences=4000,
-                    sentence_variation=500,
+                    unique_sentences=10000,
+                    sentence_variation=1,
                     file_name=file_name,
                 )
 
@@ -86,31 +88,10 @@ class FinalProject:
             origin_test, target_test, buffer=100000
         )
 
-    def define_model(self):
-        model_isnt = Seq2SeqModel()
-        print(self.train_ds)
-        print(self.val_ds)
-        print(self.context_text_processor)
-        print(self.target_text_processor)
-
-        model_isnt.set_dataset(
-            train=self.train_ds,
-            val=self.val_ds,
-            context_text_processor=self.context_text_processor,
-            target_text_processor=self.target_text_processor,
-        )
-        model_isnt.set_hyper_parameters(units=256, lr=0.001)
-        model_isnt.set_model()
-        # model_isnt.train_model(epochs=50)
-        model_isnt.load_model()
-
-    def train_model(self):
-        instance = Seq2SeqModel()
-
-    def ngram():
+    def Lev():
         pass
 
-    def norvig():
+    def Norvig():
         pass
 
     def create_metrics():

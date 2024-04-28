@@ -61,9 +61,7 @@ class DataSynthesizer:
         file_id = "1bK6PvtUpluk-4WIpEhs7p2c3vy5AVwVG"
         url_dataset = f"https://drive.usercontent.google.com/download?id=1bK6PvtUpluk-4WIpEhs7p2c3vy5AVwVG&export=download&authuser=0&confirm=t&uuid=0050d7b2-f732-42fd-a356-fafc4aa33e4f&at=APZUnTW3LQrDM25YzKQbJIzb42qL%3A1712155394334"
 
-        zip_filename = f"{file_id}.zip"
-
-        self.http_fetch_and_unzip(url_dataset, "test")
+        self.http_fetch_and_unzip(url_dataset, file_id)
 
     def http_fetch_and_unzip(self, url, filename):
         print("Fetching Zip")
@@ -71,7 +69,7 @@ class DataSynthesizer:
 
         try:
             with requests.get(url, stream=True) as r:
-                with open(filename, "wb") as f:
+                with open(zip_filename, "wb") as f:
                     for chunk in r.iter_content(chunk_size=8192):
                         if chunk:
                             f.write(chunk)
