@@ -14,7 +14,7 @@ tf.get_logger().setLevel("ERROR")  # or tf.logging.set_verbosity(tf.logging.ERRO
 import tensorflow_addons as tfa
 
 from sklearn.model_selection import train_test_split
-
+import pandas as pd
 import os
 import time
 
@@ -36,22 +36,31 @@ class SeqAttention:
 
     def __init__(
         self,
-        buffer=100000,
+        buffer=131072,
         batch_size=128,
-        num_examples=1000,
-        checkpoint_dir="./B/training_checkpoints",
+        num_examples=1028,
+        learning_rate=0.0001,
+        file_dir="./B/training",
         attention_type="luong",
         encoder_cell="LSTM",
         decoder_cell="LSTM",
+        train_dir="Misspelling_Corpus.csv",
+        test_dir="Test_Set.csv",
     ):
         self.buffer = buffer
         self.batch_size = batch_size
         self.num_examples = num_examples
-
+        self.learning_rate = learning_rate
         self.data_processing_inst = DataProcessing()
+
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        data_set_root = os.path.join(script_dir, "..", "Dataset", train_dir)
+
+        test_set_root = os.path.join(script_dir, "..", "Dataset", test_dir)
+
         self.train_dataset, self.val_dataset, self.inp_token, self.targ_token = (
             self.data_processing_inst.call_train_val(
-                num_examples, self.buffer, self.batch_size
+                num_examples, self.buffer, self.batch_size, root=data_set_root
             )
         )
 
@@ -63,7 +72,7 @@ class SeqAttention:
             self.batch_size,
             self.inp_token,
             self.targ_token,
-            root=".\Dataset\Test_Set.csv",
+            root=test_set_root,
         )
         print(self.test_dataset)
 
@@ -83,7 +92,7 @@ class SeqAttention:
         self.max_length_input = example_input_batch.shape[1]
         self.max_length_output = example_target_batch.shape[1]
 
-        self.embedding_dimentions = 256
+        self.embedding_dimentions = 128
         self.units = 1024
         self.steps_per_epoch = num_examples // self.batch_size
 
@@ -108,11 +117,14 @@ class SeqAttention:
         )
 
         # selected
-        self.optimizer = tf.keras.optimizers.Adam()
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 
-        # Setting up checkpoint directory
-        self.checkpoint_dir = checkpoint_dir
+        # checkpoint directory
+
+        timestamp = str(int(time.time()))
+        self.checkpoint_dir = os.path.join(file_dir, timestamp)
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, "ckpt")
+
         self.checkpoint = tf.train.Checkpoint(
             optimizer=self.optimizer, encoder=self.encoder, decoder=self.decoder
         )
@@ -132,17 +144,17 @@ class SeqAttention:
         """
 
         # Lists to store additional variables
-        losses = []
-        accuracies = []
+        train_loss = []
+        train_acc = []
         val_losses = []
         val_accuracies = []
 
         for epoch in range(epochs):
             start = time.time()
-
             enc_hidden = self.encoder.initialize_hidden_state()
             total_loss = 0
             total_accuracy = 0
+            esimtate_flag = 0
 
             for batch, (inp, targ) in enumerate(
                 self.train_dataset.take(self.steps_per_epoch)
@@ -152,15 +164,32 @@ class SeqAttention:
                 total_accuracy += batch_acc
 
                 # Store batch losses and accuracies
-                losses.append(batch_loss.numpy())
-                accuracies.append(batch_acc.numpy())
 
-                if batch % 100 == 0:
+                if batch % (self.num_examples // (9 * self.batch_size)) == 0:
+                    esimtate_flag += 1
+                    current_time = time.time() - start
+                    if esimtate_flag == 1:
+                        time_estimate = 0
+                    else:
+                        time_estimate = current_time * (12 / (esimtate_flag - 1))
                     print(
-                        "Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}".format(
-                            epoch + 1, batch, batch_loss.numpy(), batch_acc.numpy()
+                        "Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f} - {:.0f}/{:.0f}".format(
+                            epoch + 1,
+                            batch,
+                            batch_loss.numpy(),
+                            batch_acc.numpy(),
+                            current_time,
+                            time_estimate,
                         )
                     )
+            # Saving (checkpoint) the model every 2 epochs
+            if (epoch + 1) % 2 == 0:
+                self.checkpoint.save(file_prefix=self.checkpoint_prefix)
+
+            epoch_loss = total_loss / self.steps_per_epoch
+            epoch_acc = total_accuracy / self.steps_per_epoch
+            train_loss.append(epoch_loss.numpy())
+            train_acc.append(epoch_acc.numpy())
 
             # Validation pass
             val_total_loss = 0
@@ -178,34 +207,24 @@ class SeqAttention:
             val_loss = val_total_loss / num_val_batches
             val_accuracy = val_total_accuracy / num_val_batches
 
-            val_losses.append(val_loss)
-            val_accuracies.append(val_accuracy)
-
-            # Saving (checkpoint) the model every 2 epochs
-            if (epoch + 1) % 2 == 0:
-                self.checkpoint.save(file_prefix=self.checkpoint_prefix)
+            val_losses.append(val_loss.numpy())
+            val_accuracies.append(val_accuracy.numpy())
 
             print(
-                "Epoch {} Loss {:.4f} Accuracy {:.4f}".format(
+                "Epoch {} Loss {:.8f} Accuracy {:.8f}".format(
                     epoch + 1,
-                    total_loss / self.steps_per_epoch,
-                    total_accuracy / self.steps_per_epoch,
+                    epoch_loss,
+                    epoch_acc,
                 )
             )
             print(
-                "Validation Loss {:.4f}, Validation Accuracy {:.4f}".format(
+                "Validation Loss {:.8f}, Validation Accuracy {:.8f}".format(
                     val_loss, val_accuracy
                 )
             )
-            print("Time taken for 1 epoch {} sec\n".format(time.time() - start))
+            print("Time taken for 1 epoch {:.0f} sec\n".format(time.time() - start))
 
-        # After training, you can process and analyze the recorded metrics as needed
-        # For example, print the losses, accuracies, validation losses, and validation accuracies
-        print("Train Losses:", losses)
-        print("Train Accuracies:", accuracies)
-        print("Validation Losses:", val_losses)
-        print("Validation Accuracies:", val_accuracies)
-
+        # Test pass
         test_total_loss = 0
         test_total_accuracy = 0
         num_test_batches = 0
@@ -218,12 +237,26 @@ class SeqAttention:
             test_total_accuracy += test_batch_acc
             num_test_batches += 1
 
+        data_to_save = {
+            "losses": train_loss,
+            "accuracies": train_acc,
+            "val_losses": val_losses,
+            "val_accuracies": val_accuracies,
+            "test_total_loss": [test_total_loss.numpy()],
+            "test_total_accuracy": [test_total_accuracy.numpy()],
+        }
+        padded_data = {key: pd.Series(value) for key, value in data_to_save.items()}
+
+        df = pd.DataFrame(padded_data)
+
+        df.to_csv(self.checkpoint_dir + "/metrics.csv")
+
         test_loss = test_total_loss / num_test_batches
         test_acc = test_total_accuracy / num_test_batches
 
         print("Test Loss {:.4f}, Test Accuracy {:.4f}".format(test_loss, test_acc))
 
-    def test(self):
+    def test(self, new_dir=None):
         """
         method: test
 
@@ -236,8 +269,17 @@ class SeqAttention:
         Example:
 
         """
-        self.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir))
-        while True:
+        if new_dir == None:
+            current_dir = self.checkpoint_dir
+        else:
+            current_dir = new_dir
+        try:
+            self.checkpoint.restore(tf.train.latest_checkpoint(current_dir))
+        except:
+            print("No model to load")
+            return
+        # runs 20 loops of 20 inputs
+        for x in range(0, 20):
             to_conv = input()
             self.spellcheck(to_conv)
             self.beam_spellcheck(to_conv)
@@ -368,7 +410,6 @@ class SeqAttention:
         return:
 
         Example:
-
         """
         sentence = self.data_processing_inst.sentence_processing(sentence)
 
@@ -429,7 +470,7 @@ class SeqAttention:
         result = self.evaluate_sentence(sentence)
         result_text = self.targ_token.sequences_to_texts(result)
         print("Input: %s" % (sentence))
-        print("Predicted sentence: {}".format(result_text))
+        print("Greedy: {}".format(result_text))
 
     def beam_evaluate_sentence(self, sentence, beam_width=3):
         """
@@ -520,21 +561,20 @@ class SeqAttention:
             beam_score = [j.sum() for j in score]
             print("Input: %s" % (sentence))
             for i in range(len(output)):
-                print(
-                    "{} Predicted Sentence: {}  {}".format(
-                        i + 1, output[i], beam_score[i]
-                    )
-                )
+                print(f"Beam {i + 1}: {output[i]}  {beam_score[i]}")
 
 
 inst = SeqAttention(
-    buffer=1000000,
+    buffer=131072,
     batch_size=64,
     num_examples=1000,
-    checkpoint_dir="./B/training_checkpoints",
+    learning_rate=0.0001,
+    file_dir="./B/training",
     attention_type="luong",
     encoder_cell="LSTM",
-    decoder_cell="GRU",
+    decoder_cell="RNN",
+    train_dir="Misspelling_Corpus.csv",
+    test_dir="Test_Set.csv",
 )
 inst.train(epochs=2)
 # inst.test()

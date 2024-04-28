@@ -89,14 +89,20 @@ class DataProcessing:
 
         return input_tensor, target_tensor, inp_lang_tokenizer, targ_lang_tokenizer
 
-    def call_train_val(self, num_examples, buffer_size, batch_size):
+    def call_train_val(
+        self,
+        num_examples,
+        buffer_size,
+        batch_size,
+        root=".\Dataset\Misspelling_Corpus.csv",
+    ):
 
         (
             input_tensor,
             target_tensor,
             self.inp_lang_tokenizer,
             self.targ_lang_tokenizer,
-        ) = self.load_dataset(num_examples)
+        ) = self.load_dataset(num_examples, root=root)
 
         input_tensor_train, input_tensor_val, target_tensor_train, target_tensor_val = (
             train_test_split(input_tensor, target_tensor, test_size=0.2)
