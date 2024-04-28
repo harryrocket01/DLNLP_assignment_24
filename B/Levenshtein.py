@@ -2,61 +2,23 @@ import sys
 import subprocess
 
 
-from spellchecker import SpellChecker
-import nltk
+subprocess.check_call([sys.executable, "-m", "pip", "install", "ngram"])
+
 from ngram import NGram
 import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import nltk
 
-import os
-from nltk import word_tokenize
-import itertools
-import pandas as pd
+nltk.download("words")
 
 
 class Levenshtein:
     def __init__(self):
-        self.N = 1
+        self.N = 2
         if not nltk.corpus.words.words():
             nltk.download("words")
         self.corpus = set(nltk.corpus.words.words())
-
-    def levenshtein_distance(self, s1, s2):
-        """
-        method:
-
-        ~~ DESC ~~
-
-        args:
-
-        return:
-
-        Example:
-
-        """
-
-        if len(s1) < len(s2):
-            return self.levenshtein_distance(s2, s1)
-
-        if len(s2) == 0:
-            return len(s1)
-
-        previous_row = range(len(s2) + 1)
-
-        for i, c1 in enumerate(s1):
-            current_row = [i + 1]
-
-            for j, c2 in enumerate(s2):
-                insertions = previous_row[j + 1] + 1
-                deletions = current_row[j] + 1
-                substitutions = previous_row[j] + (c1 != c2)
-                current_row.append(min(insertions, deletions, substitutions))
-
-            previous_row = current_row
-
-        return previous_row[-1]
 
     def spellcheck(self, sentence):
         """
@@ -72,24 +34,52 @@ class Levenshtein:
 
         """
 
-        predicts = []
+        split = []
 
         for word in sentence.split():
-            suggested_word = word
-            min_distance = float("inf")
+            closest_word = None
 
-            for vocab_word in self.corpus:
-                distance = self.levenshtein_distance(word, vocab_word)
-                if distance < min_distance:
-                    min_distance = distance
-                    suggested_word = vocab_word
+            if word not in self.corpus:
+                closest_word = min(
+                    self.corpus, key=lambda x: nltk.edit_distance(word, x)
+                )
 
-            predicts.append(suggested_word)
+            split.append(closest_word if closest_word else word)
 
-        corrected_sentence = " ".join(predicts) + "."
-        return corrected_sentence
+        prediction = " ".join(split)
+        prediction = prediction + "."
+        return prediction
 
-    def spellcheck_addon(self, sentence):
+    def test(self, csv_file):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
+        print("1")
+        df = pd.read_csv(csv_file)
+
+        print("1")
+
+        df["Corrected"] = df["Misspelt"].apply(self.spellcheck)
+        print("1")
+
+        accuracy, precision, recall_score, f1 = self.calculate_metrics(df)
+        print("1")
+
+        print(
+            f"{csv_file} - accuracy:{accuracy} , precision:{precision} , recall_score:{recall_score} , f1:{f1}"
+        )
+        return df
+
+    def calculate_metrics(self, df):
         """
         method:
 
@@ -103,41 +93,6 @@ class Levenshtein:
 
         """
 
-        spell = SpellChecker(distance=self.N)
-        corrected_words = []
-        misspelled = spell.unknown(sentence.split())
-
-        for word in sentence.split():
-            if word not in self.corpus:
-                corrected_word = spell.correction(word)
-                if corrected_word is not None:
-                    corrected_words.append(corrected_word)
-                else:
-                    corrected_words.append(word)
-            else:
-                corrected_words.append(word)
-
-        corrected_sentence = " ".join(corrected_words)
-        corrected_sentence += "."
-        print(corrected_sentence)
-        return corrected_sentence
-
-    def test(self, csv_file, addon=True):
-        df = pd.read_csv(csv_file)
-        if addon:
-            df["Corrected"] = df["Misspelt"].apply(self.spellcheck_addon)
-
-        else:
-            df["Corrected"] = df["Misspelt"].apply(self.spellcheck)
-
-        accuracy, precision, recall, f1 = self.calculate_metrics(df)
-
-        print(
-            f"{csv_file} - accuracy:{accuracy} , precision:{precision} , recall_score:{recall} , f1:{f1}"
-        )
-        return df
-
-    def calculate_metrics(self, df):
         original_sentences = df["Original"].tolist()
         corrected_sentences = df["Corrected"].tolist()
 
@@ -174,5 +129,5 @@ class Levenshtein:
 
 
 if __name__ == "__main__":
-    levenshtein = Levenshtein()
-    levenshtein.test("Dataset/Test_Set.csv")
+    ngram_similarity = Levenshtein()
+    ngram_similarity.test("Dataset/Test_Set.csv")
