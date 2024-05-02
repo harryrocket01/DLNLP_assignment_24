@@ -161,3 +161,6 @@ class DataProcessing:
         )
 
         return test_dataset
+
+    def convert_sequences_to_tokens(self, sequences, tokenizer):
+        return tokenizer.sequences_to_texts(sequences)

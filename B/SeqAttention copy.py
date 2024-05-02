@@ -5,7 +5,6 @@ from EncoderDecoder import *
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
 import tensorflow as tf
 
 tf.get_logger().setLevel("ERROR")  # or tf.logging.set_verbosity(tf.logging.ERROR)
@@ -17,6 +16,7 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import os
 import time
+import numpy as np
 
 
 class SeqAttention:
@@ -121,8 +121,8 @@ class SeqAttention:
 
         # checkpoint directory
 
-        self.run_timestamp = str(int(time.time()))
-        self.checkpoint_dir = os.path.join(file_dir, self.run_timestamp)
+        timestamp = str(int(time.time()))
+        self.checkpoint_dir = os.path.join(file_dir, timestamp)
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, "ckpt")
 
         self.checkpoint = tf.train.Checkpoint(
@@ -253,16 +253,61 @@ class SeqAttention:
 
         df = pd.DataFrame(padded_data)
 
-        df.to_csv(self.checkpoint_dir + f"/{self.run_timestamp}_metrics.csv")
+        df.to_csv(self.checkpoint_dir + "/metrics.csv")
 
+        test_loss, test_acc, test_precision, test_recall, test_f1 = self.test_metric(
+            test_total_loss,
+            num_test_batches,
+            test_true_labels,
+            test_pred_labels,
+        )
+        print(
+            "Test Loss {:.4f}, Test Accuracy {:.4f}, Precision {:.4f}, Recall {:.4f}, F1 {:.4f}".format(
+                test_loss, test_acc, test_precision, test_recall, test_f1
+            )
+        )
+
+    def test_metric(
+        self, test_total_loss, num_test_batches, test_true_labels, test_pred_labels
+    ):
+        predicted_array_numpy = [tensor.numpy().tolist() for tensor in test_pred_labels]
+
+        print(test_true_labels)
+        print(predicted_array_numpy)
+
+        masked_true = []
+        masked_pred = []
+
+        for f, b in zip(foo, bar):
+
+        # Calculate loss
         test_loss = test_total_loss / num_test_batches
-        test_acc = test_total_accuracy / num_test_batches
 
-        print("Test Loss {:.4f}, Test Accuracy {:.4f}".format(test_loss, test_acc))
+        # Flatten the true and predicted labels
+        test_true_labels_flat = np.concatenate(test_true_labels)
+        test_pred_labels_flat = np.concatenate(predicted_array_numpy)
 
-    def test(self, new_dir=None):
+        #test_true_labels_flat = test_true_labels_flat[: len(test_pred_labels_flat)]
+
+        # Calculate accuracy
+        test_acc = accuracy_score(test_true_labels_flat, test_pred_labels_flat)
+
+        # Calculate precision, recall, and F1 score
+        test_precision = precision_score(
+            test_true_labels_flat, test_pred_labels_flat, average="weighted"
+        )
+        test_recall = recall_score(
+            test_true_labels_flat, test_pred_labels_flat, average="weighted"
+        )
+        test_f1 = f1_score(
+            test_true_labels_flat, test_pred_labels_flat, average="weighted"
+        )
+
+        return test_loss, test_acc, test_precision, test_recall, test_f1
+
+    def live_input(self, new_dir=None):
         """
-        method:
+        method: test
 
         ~~ DESC ~~
 
@@ -579,9 +624,9 @@ inst = SeqAttention(
     file_dir="./B/training",
     attention_type="luong",
     encoder_cell="LSTM",
-    decoder_cell="GRU",
+    decoder_cell="RNN",
     train_dir="Misspelling_Corpus.csv",
     test_dir="Test_Set.csv",
 )
 inst.train(epochs=2)
-# inst.test()
+inst.live_input()

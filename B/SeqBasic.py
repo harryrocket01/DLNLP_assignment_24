@@ -3,6 +3,8 @@ import tensorflow_addons as tfa
 from DataProcessing import DataProcessing
 import time
 import os
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+import pandas as pd
 
 
 class Seq2SeqModel:
@@ -11,18 +13,25 @@ class Seq2SeqModel:
         buffer=100000,
         batch_size=128,
         num_examples=1000,
-        checkpoint_dir="./B/training_checkpoints",
+        learning_rate=0.0001,
+        file_dir="./B/training",
+        train_dir="Misspelling_Corpus.csv",
+        test_dir="Test_Set.csv",
     ):
         self.buffer = buffer
         self.batch_size = batch_size
         self.num_examples = num_examples
-        self.checkpoint_dir = checkpoint_dir
-
-        # Initialize data processing and obtain datasets
+        self.learning_rate = learning_rate
         self.data_processing_inst = DataProcessing()
+
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        data_set_root = os.path.join(script_dir, "..", "Dataset", train_dir)
+
+        test_set_root = os.path.join(script_dir, "..", "Dataset", test_dir)
+
         self.train_dataset, self.val_dataset, self.inp_token, self.targ_token = (
             self.data_processing_inst.call_train_val(
-                num_examples, self.buffer, self.batch_size
+                num_examples, self.buffer, self.batch_size, root=data_set_root
             )
         )
         self.test_dataset = self.data_processing_inst.call_test(
@@ -30,9 +39,8 @@ class Seq2SeqModel:
             self.batch_size,
             self.inp_token,
             self.targ_token,
-            root=".\Dataset\Test_Set.csv",
+            root=test_set_root,
         )
-
         # Print vocabulary information
         for word, index in self.inp_token.word_index.items():
             print(f"Word: {word}, Index: {index}")
@@ -57,10 +65,14 @@ class Seq2SeqModel:
         # Define optimizer
         self.optimizer = tf.keras.optimizers.Adam()
 
-        # Define checkpoint
+        timestamp = str(int(time.time()))
+        self.checkpoint_dir = os.path.join(file_dir, timestamp)
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, "ckpt")
+
         self.checkpoint = tf.train.Checkpoint(
-            optimizer=self.optimizer, model=self.model
+            optimizer=self.optimizer,
+            encoder=self.encoder_lstm,
+            decoder=self.decoder_lstm,
         )
 
     def build_model(self):
@@ -104,8 +116,8 @@ class Seq2SeqModel:
         """Train the model"""
         EPOCHS = 5
 
-        losses = []
-        accuracies = []
+        train_loss = []
+        train_acc = []
         val_losses = []
         val_accuracies = []
 
@@ -123,22 +135,23 @@ class Seq2SeqModel:
                 total_loss += batch_loss
                 total_accuracy += batch_acc
 
-                losses.append(batch_loss.numpy())
-                accuracies.append(batch_acc.numpy())
-
                 if batch % 100 == 0:
                     print(
                         "Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}".format(
                             epoch + 1, batch, batch_loss.numpy(), batch_acc.numpy()
                         )
                     )
+            epoch_loss = total_loss / self.steps_per_epoch
+            epoch_acc = total_accuracy / self.steps_per_epoch
+            train_loss.append(epoch_loss.numpy())
+            train_acc.append(epoch_acc.numpy())
 
             val_total_loss = 0
             val_total_accuracy = 0
             num_val_batches = 0
 
             for val_inp, val_targ in self.val_dataset:
-                val_batch_loss, val_batch_acc = self.validation_step(
+                val_batch_loss, val_batch_acc, _ = self.validation_step(
                     val_inp, val_targ, enc_hidden
                 )
                 val_total_loss += val_batch_loss
@@ -168,24 +181,39 @@ class Seq2SeqModel:
             )
             print("Time taken for 1 epoch")
 
-        print("Train Losses:", losses)
-        print("Train Accuracies:", accuracies)
-        print("Validation Losses:", val_losses)
-        print("Validation Accuracies:", val_accuracies)
+            # Test pass
         test_total_loss = 0
         test_total_accuracy = 0
         num_test_batches = 0
+        test_true_labels = []
+        test_pred_labels = []
 
-        for val_inp, val_targ in self.test_set:
-            val_batch_loss, val_batch_acc = self.validation_step(
-                val_inp, val_targ, enc_hidden
+        for test_inp, test_targ in self.test_dataset:
+            test_batch_loss, test_batch_acc, test_batch_pred = self.validation_step(
+                test_inp, test_targ, enc_hidden
             )
-            val_total_loss += val_batch_loss
-            val_total_accuracy += val_batch_acc
-            num_val_batches += 1
+            test_total_loss += test_batch_loss
+            test_true_labels.extend(test_targ.numpy().tolist())
+            test_pred_labels.extend(test_batch_pred)
+            test_total_accuracy += test_batch_acc
+            num_test_batches += 1
 
-        test_loss = val_total_loss / num_val_batches
-        test_acc = val_total_accuracy / num_val_batches
+        data_to_save = {
+            "losses": train_loss,
+            "accuracies": train_acc,
+            "val_losses": val_losses,
+            "val_accuracies": val_accuracies,
+            "test_total_loss": [test_total_loss.numpy()],
+            "test_total_accuracy": [test_total_accuracy.numpy()],
+        }
+        padded_data = {key: pd.Series(value) for key, value in data_to_save.items()}
+
+        df = pd.DataFrame(padded_data)
+
+        df.to_csv(self.checkpoint_dir + f"/{self.run_timestamp}_metrics.csv")
+
+        test_loss = test_total_loss / num_test_batches
+        test_acc = test_total_accuracy / num_test_batches
 
         print("Test Loss {:.4f}, Test Accuracy {:.4f}".format(test_loss, test_acc))
 
@@ -250,8 +278,9 @@ class Seq2SeqModel:
         logits = self.fc(dec_output)
         loss = self.loss_function(real, logits)
         acc = self.masked_accuracy(real, logits)
+        predictions = tf.argmax(logits, axis=-1)
 
-        return loss, acc
+        return loss, acc, predictions
 
     def loss_function(self, real, pred):
         cross_entropy = tf.keras.losses.SparseCategoricalCrossentropy(

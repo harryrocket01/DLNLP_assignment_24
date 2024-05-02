@@ -8,6 +8,14 @@ import os
 from A.data_synthesizer import DataSynthesizer
 from A.tokenise_and_encode import TokeniseAndEncode, Vocabularay
 
+# from B.Levenshtein import *
+# from B.Norvig import *
+# from B.SeqBasic import *
+# from B.SeqAttention import *
+
+
+from B.Plotting import *
+
 # from A.Model.seq_seq2 import Seq2SeqModel
 
 import pandas as pd
@@ -17,6 +25,8 @@ import json
 class FinalProject:
 
     def __init__(self):
+
+        self.script_dir = os.path.dirname(os.path.realpath(__file__))
 
         self.data_corpus = None
 
@@ -29,6 +39,9 @@ class FinalProject:
         self.context_text_processor = None
         self.target_text_processor = None
         self.create_data()
+
+        self.graphics()
+
         # self.process_tv_set()
         # self.define_model()
 
@@ -88,14 +101,27 @@ class FinalProject:
             origin_test, target_test, buffer=100000
         )
 
-    def Lev():
+    def lev(self):
         pass
 
-    def Norvig():
+    def norvig(self):
         pass
 
-    def create_metrics():
+    def seq_basic(self):
         pass
+
+    def seq_attention(self):
+        pass
+
+    def graphics(self):
+        self.script_dir
+        path_to_save = "/B/Graphics"
+
+        fig, axs = Plotting().acc_loss_plot(
+            root=self.script_dir + "/B/training/Cluster_Runs/1714468346_metrics.csv",
+        )
+
+        fig.savefig(self.script_dir + "\B\Graphics\Final_Model_ACCLOSS.pdf")
 
 
 if __name__ == "__main__":

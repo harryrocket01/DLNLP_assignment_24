@@ -48,6 +48,7 @@ class Levenshtein:
 
         prediction = " ".join(split)
         prediction = prediction + "."
+        print(sentence, ":", prediction)
         return prediction
 
     def test(self, csv_file):

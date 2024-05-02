@@ -119,7 +119,6 @@ class Norvig:
 
         corrected_sentence = " ".join(corrected_words)
         corrected_sentence += "."
-        print(corrected_sentence)
         return corrected_sentence
 
     def test(self, csv_file, addon=True):
