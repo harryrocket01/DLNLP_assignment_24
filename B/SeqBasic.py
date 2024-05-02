@@ -112,16 +112,16 @@ class Seq2SeqModel:
         self.model = tf.keras.Model([encoder_inputs, decoder_inputs], outputs)
         self.model.compile(optimizer="adam", loss="sparse_categorical_crossentropy")
 
-    def train(self):
+    def train(self, epochs=5):
         """Train the model"""
-        EPOCHS = 5
 
         train_loss = []
         train_acc = []
         val_losses = []
         val_accuracies = []
+        epoch_time = []
 
-        for epoch in range(EPOCHS):
+        for epoch in range(epochs):
             start = time.time()
 
             enc_hidden = self.initialize_hidden_state()
@@ -163,8 +163,10 @@ class Seq2SeqModel:
 
             val_losses.append(val_loss)
             val_accuracies.append(val_accuracy)
+            time_elapsed = time.time() - start
+            epoch_time.append(time_elapsed)
 
-            if (epoch + 1) % 2 == 0:
+            if (epoch + 1) % 1 == 0:
                 self.checkpoint.save(file_prefix=self.checkpoint_prefix)
 
             print(
@@ -179,7 +181,7 @@ class Seq2SeqModel:
                     val_loss, val_accuracy
                 )
             )
-            print("Time taken for 1 epoch")
+            print("Time taken for 1 epoch {:.0f} sec\n".format(time_elapsed))
 
             # Test pass
         test_total_loss = 0
@@ -202,6 +204,7 @@ class Seq2SeqModel:
             "losses": train_loss,
             "accuracies": train_acc,
             "val_losses": val_losses,
+            "time": epoch_time,
             "val_accuracies": val_accuracies,
             "test_total_loss": [test_total_loss.numpy()],
             "test_total_accuracy": [test_total_accuracy.numpy()],
@@ -209,7 +212,7 @@ class Seq2SeqModel:
         padded_data = {key: pd.Series(value) for key, value in data_to_save.items()}
 
         df = pd.DataFrame(padded_data)
-
+        self.run_timestamp = str(int(time.time()))
         df.to_csv(self.checkpoint_dir + f"/{self.run_timestamp}_metrics.csv")
 
         test_loss = test_total_loss / num_test_batches
@@ -222,13 +225,6 @@ class Seq2SeqModel:
             tf.zeros((self.batch_size, self.enc_units)),
             tf.zeros((self.batch_size, self.enc_units)),
         ]
-
-    def test(self):
-        self.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir))
-        while True:
-            to_conv = input()
-            self.spellcheck(to_conv)
-            self.beam_spellcheck(to_conv)
 
     @tf.function
     def train_step(self, inp, targ, enc_hidden):
@@ -308,7 +304,49 @@ class Seq2SeqModel:
         )
         return accuracy
 
+    def spellcheck(self, input_string):
+        # Tokenize the input string
+        input_tokens = self.data_processing_inst.inp_lang_tokenizer.texts_to_sequences(
+            [input_string]
+        )
+
+        input_tokens = tf.keras.preprocessing.sequence.pad_sequences(
+            input_tokens, padding="post", maxlen=self.max_length_input
+        )
+
+        input_tokens = tf.expand_dims(input_tokens, axis=0)  # Add batch dimension
+
+        enc_hidden = self.initialize_hidden_state()
+        _, enc_h, enc_c = self.encoder_lstm(input_tokens, initial_state=enc_hidden)
+
+        dec_input = tf.expand_dims(
+            [self.data_processing_inst.targ_lang_tokenizer.word_index["<"]], 0
+        )
+        dec_hidden = [enc_h, enc_c]
+        result = []
+
+        for t in range(self.max_length_output):
+            predictions, dec_hidden, _ = self.decoder_lstm(
+                self.decoder_embedding(dec_input), initial_state=dec_hidden
+            )
+            predictions = self.fc(predictions)
+            predicted_id = tf.argmax(predictions[0], axis=-1).numpy()
+
+            if (
+                self.data_processing_inst.targ_lang_tokenizer.index_word[predicted_id]
+                == ">"
+            ):
+                break
+
+            result.append(
+                self.data_processing_inst.targ_lang_tokenizer.index_word[predicted_id]
+            )
+
+            dec_input = tf.expand_dims([predicted_id], 0)
+
+        return " ".join(result)
+
 
 # Example usage:
 seq2seq_model = Seq2SeqModel()
-seq2seq_model.train()
+seq2seq_model.train(epochs=2)

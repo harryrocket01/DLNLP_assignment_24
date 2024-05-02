@@ -148,7 +148,7 @@ class SeqAttention:
         train_acc = []
         val_losses = []
         val_accuracies = []
-
+        epoch_time = []
         for epoch in range(epochs):
             start = time.time()
             enc_hidden = self.encoder.initialize_hidden_state()
@@ -210,6 +210,9 @@ class SeqAttention:
             val_losses.append(val_loss.numpy())
             val_accuracies.append(val_accuracy.numpy())
 
+            time_elapsed = time.time() - start
+            epoch_time.append(time_elapsed)
+
             print(
                 "Epoch {} Loss {:.8f} Accuracy {:.8f}".format(
                     epoch + 1,
@@ -222,7 +225,7 @@ class SeqAttention:
                     val_loss, val_accuracy
                 )
             )
-            print("Time taken for 1 epoch {:.0f} sec\n".format(time.time() - start))
+            print("Time taken for 1 epoch {:.0f} sec\n".format(time_elapsed))
 
         # Test pass
         test_total_loss = 0
