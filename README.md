@@ -2,11 +2,9 @@
 
 # DLNLP_assignment23_24
 
-This is .....
-
 ## Description
 
-This codevase is an exploration into the rabbit hole of spelling and typography errors, reviewing and implementing a range of solutions to tackle this problem through the use of deep learning and natural language processing. In particular methods such as Ngram Similarity, Rule-based estimation and Sequence-Sequence modelling will be explored to identify their given effectiveness within the detection and correction of misspelt text within the English language. The models are trained and validated through the use of synthetic data generation, with the use of real data from individuals with and without learning disabilities to benchmark the real-world effectiveness of the final model.
+This codebase is an exploration into the rabbit hole of spelling and typography errors, reviewing and implementing a range of solutions to tackle this problem through the use of deep learning and natural language processing. In particular methods such as Ngram Similarity, Rule-based estimation and Sequence-Sequence modelling will be explored to identify their given effectiveness within the detection and correction of misspelt text within the English language. The models are trained and validated through the use of synthetic data generation, with the use of real data from individuals with and without learning disabilities to benchmark the real-world effectiveness of the final model.
 
 ### Dependencies
 
@@ -54,13 +52,25 @@ Two machines were used to build, train and evaluate the models. The first is a X
 ## File Structure
 
 Below is the file structure of the code base.
+
+A contains the code for the data synthesis.
+
+B contains all of the models built for this task. All of the graphics in the report can be found in Graphics, and all of the metric files (taken from the cluster), are stored within ClusterRuns. Models are saved within the training file, within B.
+
+All of the datasets can be found within the Dataset Folder. As they are too large to upload to github, the code is setup to fetch a ZIP and unpack the ZIP files containing the final dataset locally.
 ```
 ├───A
-
+│   └───Model
 ├───B
-
-└───Datasets
+│   ├───Graphics
+│   │   └───ClusterRuns
+│   ├───StandAlone
+│   └───training
+└───Dataset
+    ├───Mistakes
+    └───Sentences
 ```
+
 ## Authors
 
 Harry R J Softley-Graham  - SN: 19087176
