@@ -63,6 +63,8 @@ Below is the file structure of the code base.
 └───Dataset
     ├───Mistakes
     └───Sentences
+```
+
 ## Authors
 
 Harry R J Softley-Graham  - SN: 19087176
