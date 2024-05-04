@@ -52,6 +52,12 @@ Two machines were used to build, train and evaluate the models. The first is a X
 ## File Structure
 
 Below is the file structure of the code base.
+
+A contains the code for the data synthesis.
+
+B contains all of the models built for this task. All of the graphics in the report can be found in Graphics, and all of the metric files (taken from the cluster), are stored within ClusterRuns. Models are saved within the training file, within B.
+
+All of the datasets can be found within the Dataset Folder. As they are too large to upload to github, the code is setup to fetch a ZIP and unpack the ZIP files containing the final dataset locally.
 ```
 ├───A
 │   └───Model
