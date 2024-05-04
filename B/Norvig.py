@@ -1,3 +1,12 @@
+"""
+The following code was written as the final project for 
+ELEC0141 Deep Learning for Natural Language Processing
+
+Author: Harry R J Softley-Graham
+Date: Jan-May 2024
+
+"""
+
 import sys
 import subprocess
 
@@ -135,6 +144,11 @@ class Norvig:
             f"{csv_file} - accuracy:{accuracy} , precision:{precision} , recall_score:{recall} , f1:{f1}"
         )
         return df
+
+    def live_correction(self):
+        for x in range(0, 20):
+            user_input = input().lower()
+            self.spellcheck_addon(user_input)
 
     def calculate_metrics(self, df):
         original_sentences = df["Original"].tolist()

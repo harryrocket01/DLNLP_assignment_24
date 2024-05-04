@@ -1,3 +1,12 @@
+"""
+The following code was written as the final project for 
+ELEC0141 Deep Learning for Natural Language Processing
+
+Author: Harry R J Softley-Graham
+Date: Jan-May 2024
+
+"""
+
 from DataProcessing import DataProcessing
 from EncoderDecoder import *
 
@@ -249,6 +258,7 @@ class SeqAttention:
             "accuracies": train_acc,
             "val_losses": val_losses,
             "val_accuracies": val_accuracies,
+            "time": epoch_time,
             "test_total_loss": [test_total_loss.numpy()],
             "test_total_accuracy": [test_total_accuracy.numpy()],
         }

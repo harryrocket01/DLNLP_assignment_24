@@ -1,3 +1,12 @@
+"""
+The following code was written as the final project for 
+ELEC0141 Deep Learning for Natural Language Processing
+
+Author: Harry R J Softley-Graham
+Date: Jan-May 2024
+
+"""
+
 import matplotlib.pyplot as plt
 
 import numpy as np

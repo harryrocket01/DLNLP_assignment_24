@@ -303,8 +303,3 @@ class Seq2SeqModel:
             tf.reduce_sum(mask), 1
         )
         return accuracy
-
-
-# Example usage:
-seq2seq_model = Seq2SeqModel()
-seq2seq_model.train(epochs=2)

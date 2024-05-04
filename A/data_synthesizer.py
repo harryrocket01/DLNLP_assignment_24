@@ -1,30 +1,52 @@
+"""
+The following code was written as the final project for 
+ELEC0141 Deep Learning for Natural Language Processing
+
+Author: Harry R J Softley-Graham
+Date: Jan-May 2024
+
+"""
+
 import numpy as np
 import re
 import random
 import pandas as pd
 import os
 import requests
-import shutil
 import zipfile
 
 
 class FileRead:
+    """
+    Class: FileRead
+
+    Class containing fucntiosn to read TXT and DAT files.
+
+    args:
+        none
+
+    Example:
+         FileRead()
+    """
 
     def __init__(self):
         pass
 
     def read_txt(self, root: str):
         """
-        method:
+        method: read_txt
 
-        ~~ DESC ~~
+        Function specilised in reading and unpacking TXT files. Returns
+        dictionary of mispelling pairs.
 
         args:
+            root (str):
 
         return:
+            misspelling_dict (dict): dictionary of misspelling pairs
 
         Example:
-
+            FileRead().read_txt("file.txt")
         """
 
         misspelling_dict = {}
@@ -44,16 +66,19 @@ class FileRead:
 
     def read_dat(self, root: str):
         """
-        method:
+        method: read_dat
 
-        ~~ DESC ~~
+        Function specilised in reading and unpacking DAT files. Returns
+        dictionary of mispelling pairs.
 
         args:
+            root (str):
 
         return:
+            misspelling_dict (dict): dictionary of misspelling pairs
 
         Example:
-
+            FileRead().read_dat("file.dat")
         """
 
         data_dict = {}
@@ -74,6 +99,25 @@ class FileRead:
 
 
 class DataSynthesizer:
+    """
+    Class: FileRead
+
+    Class containing fucntiosn create custom dataset
+    of mispelling pair sentences.
+
+    Data format example:
+
+    streams hold water. (correct)
+    steavams holvd water. (mispell)
+    1 (flag)
+
+    args:
+        none
+
+    Example:
+         DataSynthesizer()
+    """
+
     def __init__(self):
 
         self.root_files = []
@@ -84,15 +128,17 @@ class DataSynthesizer:
 
     def download_files(self):
         """
-        method:
+        method: download_files
 
-        ~~ DESC ~~
+        Used to fetch zip file of dataset, stored on google drive.
 
         args:
-
+            none
         return:
+            none
 
         Example:
+            DataSynthesizer().download_files
 
         """
 
@@ -101,18 +147,21 @@ class DataSynthesizer:
 
         self.http_fetch_and_unzip(url_dataset, file_id)
 
-    def http_fetch_and_unzip(self, url, filename):
+    def http_fetch_and_unzip(self, url: str, filename: str):
         """
-        method:
+        method: http_fetch_and_unzip
 
         ~~ DESC ~~
 
         args:
+            url (str): url to fetch from (google drive download link)
+            filename (str): name of file to save to
 
         return:
+            None
 
         Example:
-
+            DataSynthesizer().download_files()
         """
 
         print("Fetching Zip")
@@ -159,16 +208,18 @@ class DataSynthesizer:
 
     def set_root(self, root):
         """
-        method:
+        method: set_root
 
-        ~~ DESC ~~
+        sets and checks the roots of files to read
 
         args:
+            set_root (array): array of roots
 
         return:
+            bool: status if root was set correctly
 
         Example:
-
+            DataSynthesizer().set_root()
         """
         for path in root:
             if os.path.isfile(path) == False:
@@ -180,16 +231,18 @@ class DataSynthesizer:
 
     def read_all(self):
         """
-        method:
+        method: read_all
 
-        ~~ DESC ~~
+        Reads all files within the mispelling word pairs.
 
         args:
+            None
 
         return:
+            mispell_dict (dic): dictonary of mispelling sentence pairs
 
         Example:
-
+            DataSynthesizer().read_all()
         """
         # read files merge dictionaries
         for current in self.root_files:
@@ -205,7 +258,7 @@ class DataSynthesizer:
                 else:
                     self.mispell_dict[key] = value
 
-        # remove duplicate
+        # remove duplicates in array
         self.mispell_dict = {
             key: self.mispell_dict[key] for key in sorted(self.mispell_dict)
         }
@@ -219,20 +272,25 @@ class DataSynthesizer:
     def create_misspell_corpus(
         self,
         root,
-        unique_sentences=2000,
-        sentence_variation=50,
+        unique_sentences: int = 2000,
+        sentence_variation: int = 50,
         file_name="Misspelling_Corpus.csv",
     ):
         """
-        method:
+        method: create_misspell_corpus
 
-        ~~ DESC ~~
+        Creates Mispelling Corpus of mispelling setence pairs
 
         args:
+            root():
+            unique_sentences (int): number of unique sentences to inclide
+            sentence_variation (int) number of variations for each unique sentence
 
         return:
+            none
 
         Example:
+            DataSynthesizer().create_misspell_corpus(1000,200)
 
         """
         if os.path.isfile(root) == False:
@@ -279,15 +337,18 @@ class DataSynthesizer:
 
     def format_to_vocab(self, sentence):
         """
-        method:
+        method: format_to_vocab
 
-        ~~ DESC ~~
+        formats text to set standard. Sets uniform spacing and length.
 
         args:
+            sentence(str):
 
         return:
+            sentence(merged_sentence):
 
         Example:
+            DataSynthesizer().format_to_vocab("streams have water")
 
         """
         sentence = sentence.lower()
@@ -298,7 +359,20 @@ class DataSynthesizer:
         return merged_sentence
 
     def clean_text(self, text):
-        """Remove unwanted characters and extra spaces from the text"""
+        """
+        method: clean_text
+
+        Remove unwanted characters and extra spaces from the text
+
+        args:
+            text (str): input string to format
+
+        return:
+            text (str): formatted output string
+
+        Example:
+            DataSynthesizer().clean_text("streams have water")
+        """
         text = re.sub(r"([?.!,¿])", r" \1 ", text)
         text = re.sub(r'[" "]+', " ", text)
         text = re.sub(r"\n", " ", text)
@@ -307,18 +381,20 @@ class DataSynthesizer:
         text = re.sub(" +", " ", text)  # Removes extra spaces
         return text
 
-    def mispell(self, sentence):
+    def mispell(self, sentence: str):
         """
-        method:
+        method: mispell
 
-        ~~ DESC ~~
+        given a setence, it produces a mispelling pair for that given setnece.
 
         args:
+            sentence (str): setnence to produce mispelling of
 
         return:
+            merged_sentence (str): final mispelling of sentence
 
         Example:
-
+            DataSynthesizer().mispell("streams have water")
         """
 
         sample = self.sample_from_dict()
@@ -351,14 +427,14 @@ class DataSynthesizer:
         """
         method:
 
-        ~~ DESC ~~
+        Samples from mispelling distribution for number of mispellings.
 
         args:
-
+            none
         return:
-
+            key (int): number of mispellings to occur/
         Example:
-
+            DataSynthesizer().sample_from_dict()
         """
         total_weight = sum(self.mistake_freq.values())
         rand_num = random.uniform(0, total_weight)
@@ -370,15 +446,18 @@ class DataSynthesizer:
 
     def flag(self, original, misspelt):
         """
-        method:
+        method: flag
 
-        ~~ DESC ~~
+        Flag if two setences are different.
 
         args:
+            original (str): orignal setence
+            misspelt (str): misspelt sentence
 
         return:
-
+            bool: flag of if two strings are different
         Example:
+            DataSynthesizer().flag("aa", "ab")
 
         """
 
