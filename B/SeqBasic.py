@@ -304,48 +304,6 @@ class Seq2SeqModel:
         )
         return accuracy
 
-    def spellcheck(self, input_string):
-        # Tokenize the input string
-        input_tokens = self.data_processing_inst.inp_lang_tokenizer.texts_to_sequences(
-            [input_string]
-        )
-
-        input_tokens = tf.keras.preprocessing.sequence.pad_sequences(
-            input_tokens, padding="post", maxlen=self.max_length_input
-        )
-
-        input_tokens = tf.expand_dims(input_tokens, axis=0)  # Add batch dimension
-
-        enc_hidden = self.initialize_hidden_state()
-        _, enc_h, enc_c = self.encoder_lstm(input_tokens, initial_state=enc_hidden)
-
-        dec_input = tf.expand_dims(
-            [self.data_processing_inst.targ_lang_tokenizer.word_index["<"]], 0
-        )
-        dec_hidden = [enc_h, enc_c]
-        result = []
-
-        for t in range(self.max_length_output):
-            predictions, dec_hidden, _ = self.decoder_lstm(
-                self.decoder_embedding(dec_input), initial_state=dec_hidden
-            )
-            predictions = self.fc(predictions)
-            predicted_id = tf.argmax(predictions[0], axis=-1).numpy()
-
-            if (
-                self.data_processing_inst.targ_lang_tokenizer.index_word[predicted_id]
-                == ">"
-            ):
-                break
-
-            result.append(
-                self.data_processing_inst.targ_lang_tokenizer.index_word[predicted_id]
-            )
-
-            dec_input = tf.expand_dims([predicted_id], 0)
-
-        return " ".join(result)
-
 
 # Example usage:
 seq2seq_model = Seq2SeqModel()

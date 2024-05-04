@@ -116,12 +116,58 @@ class FinalProject:
     def graphics(self):
         self.script_dir
         path_to_save = "/B/Graphics"
-
+        # Final Model
         fig, axs = Plotting().acc_loss_plot(
-            root=self.script_dir + "/B/training/Cluster_Runs/1714468346_metrics.csv",
+            root=self.script_dir + "/B/Graphics/ClusterRuns/1714468346_metrics.csv",
+            title="Final Model Accuracy-Loss Plot on Full Train Set",
         )
 
         fig.savefig(self.script_dir + "\B\Graphics\Final_Model_ACCLOSS.pdf")
+
+        # SeqBasic
+        fig, axs = Plotting().acc_loss_plot(
+            root=self.script_dir + "/B/Graphics/ClusterRuns/1714209146_metrics.csv",
+            title="Seq2Seq (no attention) Accuracy-Loss Plot",
+        )
+
+        fig.savefig(self.script_dir + "\B\Graphics\SeqBasic_ACCLOSS.pdf")
+        # cell plots
+        fig1, axs1 = Plotting().acc_loss_plot(
+            root=self.script_dir + "/B/Graphics/ClusterRuns/1713795920_metrics.csv",
+        )
+        fig2, axs2 = Plotting().acc_loss_plot(
+            root=self.script_dir + "/B/Graphics/ClusterRuns/1713803259_metrics.csv",
+        )
+        fig3, ax3 = Plotting().acc_loss_plot(
+            root=self.script_dir + "/B/Graphics/ClusterRuns/1713818918_metrics.csv",
+        )
+        fig1.savefig(self.script_dir + "\B\Graphics\RNN_ACCLOSS.pdf")
+        fig2.savefig(self.script_dir + "\B\Graphics\GRU_ACCLOSS.pdf")
+        fig3.savefig(self.script_dir + "\B\Graphics\LSTM_ACCLOSS.pdf")
+
+        fig, axs = Plotting().decoder_cell_plot(
+            root1=self.script_dir + "/B/Graphics/ClusterRuns/1713795920_metrics.csv",
+            root2=self.script_dir + "/B/Graphics/ClusterRuns/1713803259_metrics.csv",
+            root3=self.script_dir + "/B/Graphics/ClusterRuns/1713818918_metrics.csv",
+        )
+        fig.savefig(self.script_dir + "/B/Graphics/decoder_cell_comparison.pdf")
+
+        # attention
+        fig1, axs1 = Plotting().acc_loss_plot(
+            root=self.script_dir + "/B/Graphics/ClusterRuns/1713795920_metrics.csv",
+        )
+        fig2, axs2 = Plotting().acc_loss_plot(
+            root=self.script_dir + "/B/Graphics/ClusterRuns/1713803259_metrics.csv",
+        )
+        fig1.savefig(self.script_dir + "/B/Graphics//bahdanau_ACCLOSS.pdf")
+        fig2.savefig(self.script_dir + "/B/Graphics//loung_ACCLOSS.pdf")
+
+        fig, axs = Plotting().attention_plot(
+            root1=self.script_dir + "/B/Graphics/ClusterRuns/1713821129_metrics.csv",
+            root2=self.script_dir + "/B/Graphics/ClusterRuns/1713825080_metrics.csv",
+        )
+
+        fig.savefig(self.script_dir + "/B/Graphics//attention_comparison.pdf")
 
 
 if __name__ == "__main__":

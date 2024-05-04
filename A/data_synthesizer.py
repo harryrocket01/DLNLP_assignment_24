@@ -14,6 +14,18 @@ class FileRead:
         pass
 
     def read_txt(self, root: str):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
 
         misspelling_dict = {}
         with open(root, "r") as file:
@@ -31,6 +43,19 @@ class FileRead:
         return misspelling_dict
 
     def read_dat(self, root: str):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
+
         data_dict = {}
         with open(root, "r") as file:
             for line in file:
@@ -58,12 +83,38 @@ class DataSynthesizer:
         self.mispell_dict = {}
 
     def download_files(self):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
+
         file_id = "1bK6PvtUpluk-4WIpEhs7p2c3vy5AVwVG"
         url_dataset = f"https://drive.usercontent.google.com/download?id=1bK6PvtUpluk-4WIpEhs7p2c3vy5AVwVG&export=download&authuser=0&confirm=t&uuid=0050d7b2-f732-42fd-a356-fafc4aa33e4f&at=APZUnTW3LQrDM25YzKQbJIzb42qL%3A1712155394334"
 
         self.http_fetch_and_unzip(url_dataset, file_id)
 
     def http_fetch_and_unzip(self, url, filename):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
+
         print("Fetching Zip")
         zip_filename = f"{filename}.zip"
 
@@ -107,6 +158,18 @@ class DataSynthesizer:
         print("Completed")
 
     def set_root(self, root):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
         for path in root:
             if os.path.isfile(path) == False:
                 print("Missing File At Root")
@@ -116,7 +179,18 @@ class DataSynthesizer:
         return 1
 
     def read_all(self):
+        """
+        method:
 
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
         # read files merge dictionaries
         for current in self.root_files:
 
@@ -149,7 +223,18 @@ class DataSynthesizer:
         sentence_variation=50,
         file_name="Misspelling_Corpus.csv",
     ):
+        """
+        method:
 
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
         if os.path.isfile(root) == False:
             print("Missing File at Root")
             print({root})
@@ -193,6 +278,18 @@ class DataSynthesizer:
         sentence_dataframe.to_csv(f"./Dataset/{file_name}")
 
     def format_to_vocab(self, sentence):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
         sentence = sentence.lower()
         sentence = self.clean_text(sentence)
         sentence_list = re.findall(r"\w+|\S", sentence)
@@ -211,6 +308,18 @@ class DataSynthesizer:
         return text
 
     def mispell(self, sentence):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
 
         sample = self.sample_from_dict()
 
@@ -239,6 +348,18 @@ class DataSynthesizer:
         return merged_sentence
 
     def sample_from_dict(self):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
         total_weight = sum(self.mistake_freq.values())
         rand_num = random.uniform(0, total_weight)
         cumulative_weight = 0
@@ -248,4 +369,17 @@ class DataSynthesizer:
                 return key
 
     def flag(self, original, misspelt):
+        """
+        method:
+
+        ~~ DESC ~~
+
+        args:
+
+        return:
+
+        Example:
+
+        """
+
         return 1 if original != misspelt else 0
