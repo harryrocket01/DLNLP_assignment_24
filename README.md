@@ -2,11 +2,9 @@
 
 # DLNLP_assignment23_24
 
-This is .....
-
 ## Description
 
-This codevase is an exploration into the rabbit hole of spelling and typography errors, reviewing and implementing a range of solutions to tackle this problem through the use of deep learning and natural language processing. In particular methods such as Ngram Similarity, Rule-based estimation and Sequence-Sequence modelling will be explored to identify their given effectiveness within the detection and correction of misspelt text within the English language. The models are trained and validated through the use of synthetic data generation, with the use of real data from individuals with and without learning disabilities to benchmark the real-world effectiveness of the final model.
+This codebase is an exploration into the rabbit hole of spelling and typography errors, reviewing and implementing a range of solutions to tackle this problem through the use of deep learning and natural language processing. In particular methods such as Ngram Similarity, Rule-based estimation and Sequence-Sequence modelling will be explored to identify their given effectiveness within the detection and correction of misspelt text within the English language. The models are trained and validated through the use of synthetic data generation, with the use of real data from individuals with and without learning disabilities to benchmark the real-world effectiveness of the final model.
 
 ### Dependencies
 
@@ -56,11 +54,15 @@ Two machines were used to build, train and evaluate the models. The first is a X
 Below is the file structure of the code base.
 ```
 ├───A
-
+│   └───Model
 ├───B
-
-└───Datasets
-```
+│   ├───Graphics
+│   │   └───ClusterRuns
+│   ├───StandAlone
+│   └───training
+└───Dataset
+    ├───Mistakes
+    └───Sentences
 ## Authors
 
 Harry R J Softley-Graham  - SN: 19087176
