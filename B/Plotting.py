@@ -66,7 +66,7 @@ class Plotting:
         self, x: ArrayLike, y: ArrayLike, title: str, x_label: str, y_label: str, legend
     ):
         """
-        function: line_plot
+        function: Line_Plot
 
         Creates a line plot from two inputted arrays
 
@@ -104,7 +104,7 @@ class Plotting:
 
         return fig, axs
 
-    def acc_loss_plot(self, root: str, title="Accuracy Loss Plot"):
+    def acc_loss_plot(self, root: str, title: str = "Accuracy Loss Plot"):
         """
         function: acc_loss_plot
 
@@ -112,11 +112,7 @@ class Plotting:
         to show training of a model
 
         args:
-            acc (ArrayLike): Array of train accuracy points
-            loss (ArrayLike): Array of train loss points
-            val_acc (ArrayLike): Array of validation accuracy points
-            val_loss (ArrayLike): Array of validation loss points
-            x_axis (ArrayLike): array of epochs
+            root (str): location of file to plot
             title (str): Title for plot
 
         return:
@@ -175,89 +171,15 @@ class Plotting:
 
         return fig, axs
 
-    def acc_loss_log_plot(self, root: str, title="Accuracy Loss Plot"):
+    def acc_loss_log_plot(self, root: str, title: str = "Accuracy Loss Plot"):
         """
-        function: acc_loss_plot
+        function: acc_loss_log_plot
 
         Creates a two y-axis accuracy-loss plot from inputted arrays. Used
-        to show training of a model
+        to show training of a model. Uses a logorithmic scale.
 
         args:
-            acc (ArrayLike): Array of train accuracy points
-            loss (ArrayLike): Array of train loss points
-            val_acc (ArrayLike): Array of validation accuracy points
-            val_loss (ArrayLike): Array of validation loss points
-            x_axis (ArrayLike): array of epochs
-            title (str): Title for plot
-
-        return:
-            fig (plt.Figure): Matplotlib Figure Class of plot
-            axs (plt.Axes): Matplotlib Axes Class of plot
-
-        Example:
-            fig, axs = Plotting(Dataset, Labels).acc_loss_plot(acc,loss,v_acc,v_loss)
-        """
-
-        dataframe = pd.read_csv(root)
-
-        fig, axs = plt.subplots()
-        axs2 = axs.twinx()
-        x_axis = np.linspace(
-            1, len(dataframe["accuracies"]), len(dataframe["accuracies"]), dtype=int
-        )
-
-        axs.set_xlabel("Epochs")
-        axs.set_ylabel("Accuracy", color="tab:red")
-        axs.plot(
-            x_axis, dataframe["accuracies"], color="tab:red", label="Train Accuracy"
-        )
-        axs.plot(
-            x_axis,
-            dataframe["val_accuracies"],
-            color="tab:red",
-            alpha=0.6,
-            label="Val Accuracy",
-        )
-
-        axs.tick_params(axis="y", labelcolor="tab:red")
-        axs.set_yscale("log")  # Setting y-axis to log scale for accuracy
-
-        axs2.set_ylabel("Loss", color="tab:blue")
-        axs2.plot(x_axis, dataframe["losses"], color="tab:blue", label="Train Loss")
-        axs2.plot(
-            x_axis,
-            dataframe["val_losses"],
-            color="tab:blue",
-            alpha=0.6,
-            label="Val Loss",
-        )
-        axs2.tick_params(axis="y", labelcolor="tab:blue")
-        axs2.set_yscale("log")  # Setting y-axis to log scale for loss
-
-        lines, labels = axs.get_legend_handles_labels()
-        lines2, labels2 = axs2.get_legend_handles_labels()
-        axs2.legend(lines + lines2, labels + labels2, loc="lower right")
-
-        axs.set_title(title)
-
-        fig.set_size_inches(5.5, 3)
-        fig.set_tight_layout(True)
-
-        return fig, axs
-
-    def acc_loss_log_plot(self, root: str, title="Accuracy Loss Plot"):
-        """
-        function: acc_loss_plot
-
-        Creates a two y-axis accuracy-loss plot from inputted arrays. Used
-        to show training of a model
-
-        args:
-            acc (ArrayLike): Array of train accuracy points
-            loss (ArrayLike): Array of train loss points
-            val_acc (ArrayLike): Array of validation accuracy points
-            val_loss (ArrayLike): Array of validation loss points
-            x_axis (ArrayLike): array of epochs
+            root (str): Dataframe of data to plot
             title (str): Title for plot
 
         return:
@@ -316,14 +238,18 @@ class Plotting:
         return fig, axs
 
     def decoder_cell_plot(
-        self, root1: str, root2: str, root3: str, title="Decoder Cell Comparison"
+        self, root1: str, root2: str, root3: str, title: str = "Decoder Cell Comparison"
     ):
         """
-        function: acc_loss_plot
+        function: decoder_cell_plot
 
+        Produces accuracy loss plots to compare decoder philosophies.
 
         args:
-
+            root1 (str): Dataframe of data to plot
+            root2 (str): Dataframe of data to plot
+            root3 (str): Dataframe of data to plot
+            title (str): Title for plot
 
         return:
             fig (plt.Figure): Matplotlib Figure Class of plot
@@ -398,10 +324,15 @@ class Plotting:
         self, root1: str, root2: str, title="Attention Block Comparison"
     ):
         """
-        function:
+        function: attention_plot
 
+        Creates compartive plot comparing execute time and accuracy of training
+        of attention blocks.
 
         args:
+            root1 (str): Dataframe of data to plot
+            root2 (str): Dataframe of data to plot
+
         return:
             fig (plt.Figure): Matplotlib Figure Class of plot
             axs (plt.Axes): Matplotlib Axes Class of plot

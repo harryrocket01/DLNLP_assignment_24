@@ -23,6 +23,33 @@ nltk.download("words")
 
 
 class Levenshtein:
+    """
+    class: Levenshtein
+
+    Implements the Levenshtein distance algorithm for spellchecking text.
+
+    Attributes:
+        N (int): N-gram parameter for Levenshtein distance calculation.
+        corpus (set): Set of words from NLTK's corpus used for spellchecking.
+
+    Methods:
+        __init__():
+            Initializes the Levenshtein object.
+
+        spellcheck(sentence):
+            Corrects misspelled words in a sentence.
+
+        test(csv_file):
+            Tests the spellcheck method on a dataset and calculates evaluation metrics.
+
+        calculate_metrics(df):
+            Calculates evaluation metrics based on original and corrected sentences.
+
+    Example Usage:
+        ngram_similarity = Levenshtein()
+        results_df = ngram_similarity.test("Dataset/Test_Set.csv")
+    """
+
     def __init__(self):
         self.N = 2
         if not nltk.corpus.words.words():
@@ -31,19 +58,24 @@ class Levenshtein:
 
     def spellcheck(self, sentence):
         """
-        method:
+        method: spellcheck
 
-        ~~ DESC ~~
+        Corrects misspelled words in a sentence.
 
         args:
+            sentence (str): the input sentence to be spellchecked.
 
         return:
+            str: The corrected sentence.
 
         Example:
-
+            ngram_similarity = Levenshtein()
+            corrected_sentence = ngram_similarity.spellcheck("Say hello to my little friend.")
         """
 
         split = []
+        if sentence.endswith("."):
+            sentence = sentence[:-1]
 
         for word in sentence.split():
             closest_word = None
@@ -55,34 +87,30 @@ class Levenshtein:
 
             split.append(closest_word if closest_word else word)
 
-        prediction = " ".join(split)
-        prediction = prediction + "."
-        print(sentence, ":", prediction)
-        return prediction
+        corrected_sentence = " ".join(split)
+        corrected_sentence += "."
+        return corrected_sentence
 
-    def test(self, csv_file):
+    def test(self, csv_file: str):
         """
-        method:
+        method: test
 
-        ~~ DESC ~~
+        Tests the spellcheck method on a dataset and calculates evaluation metrics.
 
         args:
+            csv_file (str): path to the CSV file containing misspelled sentences.
 
         return:
+            df: DataFrame with corrected sentences and evaluation metrics.
 
         Example:
-
+            results_df = Levenshtein().test("Dataset/Test_Set.csv")
         """
-        print("1")
         df = pd.read_csv(csv_file)
 
-        print("1")
-
         df["Corrected"] = df["Misspelt"].apply(self.spellcheck)
-        print("1")
 
         accuracy, precision, recall_score, f1 = self.calculate_metrics(df)
-        print("1")
 
         print(
             f"{csv_file} - accuracy:{accuracy} , precision:{precision} , recall_score:{recall_score} , f1:{f1}"
@@ -91,16 +119,21 @@ class Levenshtein:
 
     def calculate_metrics(self, df):
         """
-        method:
+        method: calculate_metrics
 
-        ~~ DESC ~~
+        Calculates evaluation metrics based on original and corrected sentences.
 
         args:
+            df (DataFrame): DataFrame containing original and corrected sentences
 
         return:
+            accuracy (float): Accuracy score
+            precision (float): Precision score
+            recall (float): Recall score
+            f1 (float): F1 score
 
         Example:
-
+            accuracy, precision, recall, f1 = Levenshtein().calculate_metrics(results_df)
         """
 
         original_sentences = df["Original"].tolist()
@@ -137,7 +170,28 @@ class Levenshtein:
 
         return accuracy, precision, recall, f1
 
+    def live_correction(self):
+        """
+        method: live_correction
+
+        Allows live correction of user input using the SpellChecker addon.
+
+        args:
+            None
+
+        return:
+            None
+
+        Example:
+            Norvig().live_correction()
+        """
+
+        for x in range(0, 20):
+            user_input = input("Input Sentence: ").lower()
+            print(self.spellcheck(user_input))
+
 
 if __name__ == "__main__":
     ngram_similarity = Levenshtein()
     ngram_similarity.test("Dataset/Test_Set.csv")
+    # ngram_similarity.live_correction()
