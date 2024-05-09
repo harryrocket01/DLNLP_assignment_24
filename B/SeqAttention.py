@@ -21,6 +21,8 @@ tf.get_logger().setLevel("ERROR")  # or tf.logging.set_verbosity(tf.logging.ERRO
 
 
 import tensorflow_addons as tfa
+
+tfa.options.disable_custom_kernel()
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from sklearn.model_selection import train_test_split
 import pandas as pd
@@ -32,29 +34,57 @@ class SeqAttention:
     """
     class: SeqAttention
 
-    ~~ DESC ~~
+    This class is the main class containing the final architecture
+    of the seq2seq model build to be a live spell checker.
+
+    It contains all of the building, training and tuning functions.
+
+    It also includes two spell checkers, including a greedy and beam
+    search algorithm.
+
+    Inspired and written based off existing implamentations:
+
+
     args:
-
+        buffer (int): buffer size for data loading/shuffling
+        batch_size (int): number of setnences to run per batch
+        num_examples (int): number of exampels to load in to train set
+        learning_rate (int): learning rate of adam optomiser
+        file_dir (str): location to save checkpoints
+        attention_type (str): type of attention block
+        encoder_cell (str): type of encoder cell
+        decoder_cell (str): type of decoder cell
+        train_dir (str): training set directory
+        test_dir (str): test set directory
     methods:
-
-    Attributes:
+        train: function to train model
+        test: function to test model on test set
+        train_step: tf train step
+        validation_step: tf validation step
+        loss_function: calualtes masked loss
+        masked_accuracy: calculates masked accuracy
+        evaluate_sentence: evaluates stentence with greedy
+        spellcheck: evaluate sentence with greedy (w/ prints)
+        beam_evaluate_sentneceL evaluates sentence with beam
+        beam_spellcheck: evaluate sentence with  beam (w/ prints)
 
     Example:
+        SeqAttention()
 
     """
 
     def __init__(
         self,
-        buffer=131072,
-        batch_size=128,
-        num_examples=1028,
-        learning_rate=0.0001,
-        file_dir="./B/training",
-        attention_type="luong",
-        encoder_cell="LSTM",
-        decoder_cell="LSTM",
-        train_dir="Misspelling_Corpus.csv",
-        test_dir="Test_Set.csv",
+        buffer: int = 131072,
+        batch_size: int = 128,
+        num_examples: int = 1028,
+        learning_rate: float = 0.0001,
+        file_dir: str = "./B/training",
+        attention_type: str = "luong",
+        encoder_cell: str = "LSTM",
+        decoder_cell: str = "LSTM",
+        train_dir: str = "Misspelling_Corpus.csv",
+        test_dir: str = "Test_Set.csv",
     ):
         self.buffer = buffer
         self.batch_size = batch_size
@@ -88,7 +118,7 @@ class SeqAttention:
         for word, index in self.inp_token.word_index.items():
             print(f"Word: {word}, Index: {index}")
 
-        # check if needed
+        # get values through pasrsing throug the encoder
         example_input_batch, example_target_batch = next(iter(self.train_dataset))
         example_input_texts = [
             self.inp_token.sequences_to_texts([sequence.numpy()])[0]
@@ -105,7 +135,7 @@ class SeqAttention:
         self.units = 1024
         self.steps_per_epoch = num_examples // self.batch_size
 
-        # Encoder & Decoder Stack
+        # Encoder & decoder
         self.encoder = Encoder(
             self.vocab_inp_size,
             self.embedding_dimentions,
@@ -125,7 +155,7 @@ class SeqAttention:
             decoder_cell=decoder_cell,
         )
 
-        # selected
+        # selected optimsior
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 
         # checkpoint directory
@@ -142,14 +172,16 @@ class SeqAttention:
         """
         method: train
 
-        ~~ DESC ~~
+        Given a set number of epochs, it will train the current loaded model
+        on that number of epochs on the peramter set batch size.
 
         args:
+            epochs (int): number of epochs to train algorithm.
 
         return:
-
+            None
         Example:
-
+            SeqAttention.train()
         """
 
         # Lists to store additional variables
@@ -158,6 +190,8 @@ class SeqAttention:
         val_losses = []
         val_accuracies = []
         epoch_time = []
+
+        # Epcoh loop
         for epoch in range(epochs):
             start = time.time()
             enc_hidden = self.encoder.initialize_hidden_state()
@@ -165,6 +199,7 @@ class SeqAttention:
             total_accuracy = 0
             esimtate_flag = 0
 
+            # batch loop
             for batch, (inp, targ) in enumerate(
                 self.train_dataset.take(self.steps_per_epoch)
             ):
@@ -273,18 +308,18 @@ class SeqAttention:
 
         print("Test Loss {:.4f}, Test Accuracy {:.4f}".format(test_loss, test_acc))
 
-    def test(self, new_dir=None):
+    def test(self, new_dir: str = None):
         """
-        method:
+        method: test
 
-        ~~ DESC ~~
+        Method used to interact with the trained model live
 
         args:
-
+            new_dir (str): new directory of model to load
         return:
-
+            None
         Example:
-
+            SeqAttention.test()
         """
         if new_dir == None:
             current_dir = self.checkpoint_dir
@@ -306,13 +341,18 @@ class SeqAttention:
         """
         method: train_step
 
-        ~~ DESC ~~
+        Tensorflow Function optomised to perform the train step pass for a given batch
 
         args:
+            inp(): input tokens
+            targ(): target toakns
+            enc_hidden(): encoder hidden layer
 
         return:
-
+            loss(): loss of this training step parse
+            acc(): accuracy of this traing step parse
         Example:
+            SeqAttention.train_step(inp, targ, enc_hidden)
 
         """
 
@@ -344,15 +384,21 @@ class SeqAttention:
     @tf.function
     def validation_step(self, inp, targ, enc_hidden):
         """
-        method: validation_step
+        method: train_step
 
-        ~~ DESC ~~
+        Tensorflow Function optomised to perform the validation/test step pass for a given batch
 
         args:
+            inp(): input tokens
+            targ(): target toakns
+            enc_hidden(): encoder hidden layer
 
         return:
-
+            loss(): loss of this training step parse
+            acc(): accuracy of this traing step parse
+            predictions(): predictions of a given input
         Example:
+            SeqAttention.validation_step(inp, targ, enc_hidden)
 
         """
 
@@ -396,16 +442,20 @@ class SeqAttention:
         """
         method: masked_accuracy
 
-        ~~ DESC ~~
+        Utility function that calculates masked accuracy of a given batch
 
         args:
+            real() : real input string
+            pred() : prediciton output string
 
         return:
+            accuracy(): computed masked accuracy of given set of strings
 
         Example:
+            SeqAttention.masked_accuracy(real, pred)
 
         """
-        # Ignore padding tokens
+        # ignore padding tokens
         mask = tf.math.logical_not(tf.math.equal(real, 0))
         mask = tf.cast(mask, dtype=tf.float32)
         correct_predictions = tf.cast(
@@ -423,13 +473,17 @@ class SeqAttention:
         """
         method: evaluate_sentence
 
-        ~~ DESC ~~
+        Evalulates a single input sentnece with a greedy search
 
         args:
+            sentence(str): input sentence to evaluate
 
         return:
+            (str): predicted output
 
         Example:
+            SeqAttention.evaluate_sentence("What is my mwan.")
+
         """
         sentence = self.data_processing_inst.sentence_processing(sentence)
 
@@ -478,13 +532,16 @@ class SeqAttention:
         """
         method: spellcheck
 
-        ~~ DESC ~~
+        QoL function to quickly call the evaluate stence and ouput results.
 
         args:
+            sentence(str): input sentence to evaluate
 
         return:
+            None
 
         Example:
+            SeqAttention.evaluate_sentence("What is my mwan.")
 
         """
         result = self.evaluate_sentence(sentence)
@@ -492,17 +549,22 @@ class SeqAttention:
         print("Input: %s" % (sentence))
         print("Greedy: {}".format(result_text))
 
-    def beam_evaluate_sentence(self, sentence, beam_width=3):
+    def beam_evaluate_sentence(self, sentence, beam_width: int = 3):
         """
         method: beam_evaluate_sentence
 
-        ~~ DESC ~~
+        Evaluate a setence through the use of the beam search algoithm.
+        Provides n number of outputs of potential sentences.
 
         args:
+            beam_width (int): width of beam search
 
         return:
+            final_outputs (arr): n number of predicted results
+            beam_scores (arr): calulated beam score of results
 
         Example:
+            SeqAttention.beam_evaluate_sentence("What is my mwan.")
 
         """
         sentence = self.data_processing_inst.sentence_processing(sentence)
@@ -530,20 +592,18 @@ class SeqAttention:
             enc_out.shape,
         )
 
-        # set decoder_inital_state which is an AttentionWrapperState considering beam_width
+        # enable beam correctly
         hidden_state = tfa.seq2seq.tile_batch([enc_h, enc_c], multiplier=beam_width)
         decoder_initial_state = self.decoder.rnn_cell.get_initial_state(
             batch_size=beam_width * inference_batch_size, dtype=tf.float32
         )
         decoder_initial_state = decoder_initial_state.clone(cell_state=hidden_state)
 
-        # Instantiate BeamSearchDecoder
         decoder_instance = tfa.seq2seq.BeamSearchDecoder(
             self.decoder.rnn_cell, beam_width=beam_width, output_layer=self.decoder.fc
         )
         decoder_embedding_matrix = self.decoder.embedding.variables[0]
 
-        # The BeamSearchDecoder object's call() function takes care of everything.
         outputs, final_state, sequence_lengths = decoder_instance(
             decoder_embedding_matrix,
             start_tokens=start_tokens,
@@ -551,7 +611,7 @@ class SeqAttention:
             initial_state=decoder_initial_state,
         )
 
-        # Convert the shape of outputs and beam_scores to (inference_batch_size, beam_width, time_step_outputs)
+        # converts the beamsearch output
         final_outputs = tf.transpose(outputs.predicted_ids, perm=(0, 2, 1))
         beam_scores = tf.transpose(
             outputs.beam_search_decoder_output.scores, perm=(0, 2, 1)
@@ -563,13 +623,19 @@ class SeqAttention:
         """
         method: beam_spellcheck
 
-        ~~ DESC ~~
+        QoL function that calls and prints beamsearch results
+
+        Evaluate a setence through the use of the beam search algoithm.
+        Provides n number of outputs of potential sentences.
 
         args:
+            sentence (str): input sentence
 
         return:
+            none
 
         Example:
+            SeqAttention.beam_spellcheck("What is my mwan.")
 
         """
         result, score_arr = self.beam_evaluate_sentence(sentence)
