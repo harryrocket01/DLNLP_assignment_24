@@ -8,10 +8,8 @@ Date: Jan-May 2024
 """
 
 import matplotlib.pyplot as plt
-
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from numpy.typing import ArrayLike
 from sklearn.metrics import confusion_matrix
 import seaborn as sns

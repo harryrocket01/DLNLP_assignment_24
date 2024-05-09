@@ -263,9 +263,3 @@ class Norvig:
         )
 
         return accuracy, precision, recall, f1
-
-
-if __name__ == "__main__":
-    levenshtein = Norvig()
-    # levenshtein.test("Dataset/Test_Set.csv")
-    levenshtein.live_correction()

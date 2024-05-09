@@ -1,13 +1,22 @@
+"""
+The following code was written as the final project for 
+ELEC0141 Deep Learning for Natural Language Processing
+
+Author: Harry R J Softley-Graham
+Date: Jan-May 2024
+
+"""
+
 import tensorflow as tf
-from DataProcessing import DataProcessing
+from B.DataProcessing import DataProcessing
 import time
 import os
 import pandas as pd
 
 
-class Seq2SeqModel:
+class SeqBasic:
     """
-    class: Seq2SeqModel
+    class: SeqBasic
 
     This class is the main class containing a basic encoder, decoder
     model without an attention block.

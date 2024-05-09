@@ -1,0 +1,3 @@
+,losses,accuracies,val_losses,time,val_accuracies,test_total_loss,test_total_accuracy
+0,1.5206519,0.09896472,"tf.Tensor(1.7469845, shape=(), dtype=float32)",10.561923265457153,"tf.Tensor(0.14412089, shape=(), dtype=float32)",8.189588,0.56828105
+1,1.3849756,0.12946486,"tf.Tensor(1.6818843, shape=(), dtype=float32)",7.762427806854248,"tf.Tensor(0.1544879, shape=(), dtype=float32)",,

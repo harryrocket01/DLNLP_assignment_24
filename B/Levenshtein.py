@@ -180,9 +180,3 @@ class Levenshtein:
         for x in range(0, 20):
             user_input = input("Input Sentence: ").lower()
             print(self.spellcheck(user_input))
-
-
-if __name__ == "__main__":
-    ngram_similarity = Levenshtein()
-    # ngram_similarity.test("Dataset/Test_Set.csv")
-    ngram_similarity.live_correction()

@@ -7,8 +7,8 @@ Date: Jan-May 2024
 
 """
 
-from DataProcessing import DataProcessing
-from EncoderDecoder import *
+from B.DataProcessing import DataProcessing
+from B.EncoderDecoder import *
 
 
 import os
@@ -26,7 +26,6 @@ tfa.options.disable_custom_kernel()
 import pandas as pd
 import os
 import time
-
 
 class SeqAttention:
     """
@@ -667,17 +666,3 @@ class SeqAttention:
                 print(f"Beam {i + 1}: {output[i]}  {beam_score[i]}")
 
 
-inst = SeqAttention(
-    buffer=131072,
-    batch_size=64,
-    num_examples=1000,
-    learning_rate=0.0001,
-    file_dir="./B/training",
-    attention_type="luong",
-    encoder_cell="LSTM",
-    decoder_cell="GRU",
-    train_dir="Misspelling_Corpus.csv",
-    test_dir="Test_Set.csv",
-)
-inst.train(epochs=2)
-# inst.test()
