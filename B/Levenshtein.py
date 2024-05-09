@@ -9,13 +9,7 @@ Date: Jan-May 2024
 
 import sys
 import subprocess
-
-
-subprocess.check_call([sys.executable, "-m", "pip", "install", "ngram"])
-
-from ngram import NGram
 import pandas as pd
-import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import nltk
 
