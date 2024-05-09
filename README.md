@@ -10,6 +10,14 @@ This codebase is an exploration into the rabbit hole of spelling and typography 
 
 The code was built in Python, within Windows 10 & Linux.
 
+If you wish to use a GPU with tensorflow, the following dependencies need to be installed.
+| Software | Version |
+| --- | --- |
+| Tensor Flow | 2.14.0 |
+| Tensor Addons | 0.22.0 |
+| cuda | 11.8.0 |
+| cuDNN | 8.6.0 |
+
 It was built within Python Version 3.9.18
 
 A range of packages were used. Including the environment file to duplicate the environment. This can be found below within environment.ymal
@@ -44,10 +52,28 @@ The code is run through the command line. It can accept up to two arguments. If 
 python3 main.py
 ```
 
+or
+
+```python
+python3 main.py <model_name> [new_dataset]
+```
+
+In the second option, model_name can be selected from:
+-"levenshtein"
+-"norvig"
+-"seqattention"
+-"seqbasic"
+-"final"
+
+and [new_dataset] is a bool if a new dataset is needed to be created.
+
+If hyperparameters want to be altered, due to the differences within the model, they can be changed and updated within the function that calls the class. Stand alone versions of each model are also present in the stand along folder, that were set aside to be run individually on a cluster within a CLI.
+
+The checkpoint and training files of the models cannot be uploaded to Git Hub, and they would corrupt it uploaded to a cloud service. Hence all the deep learning models need to be trained first. Make sure you are using the correct hardware.
 
 ## Hardware and training
 
-Two machines were used to build, train and evaluate the models. The first is a XPS15 9500 and the second is a custom-built water-cooled tower. The second machine saw a significant improvement in training time. The specs of both machines, along with a comprehensive benchmark for the speed of the model are given below.
+Two machines were used to build, train and evaluate the models. The specs of both machines, along with a comprehensive benchmark for the speed of the model are given below.
 
 | Componenet | Cluster | Tower |
 | --- | --- | --- |
@@ -64,7 +90,7 @@ A contains the code for the data synthesis.
 
 B contains all of the models built for this task. All of the graphics in the report can be found in Graphics, and all of the metric files (taken from the cluster), are stored within ClusterRuns. Models are saved within the training file, within B.
 
-All of the datasets can be found within the Dataset Folder. As they are too large to upload to github, the code is setup to fetch a ZIP and unpack the ZIP files containing the final dataset locally.
+All of the datasets can be found within the Dataset Folder. As they are too large to upload to Git Hub, the code is set up to fetch a ZIP and unpack the ZIP files containing the final dataset locally.
 ```
 ├───A
 │   └───Model
@@ -81,6 +107,3 @@ All of the datasets can be found within the Dataset Folder. As they are too larg
 ## Authors
 
 Harry R J Softley-Graham  - SN: 19087176
-
-## Aknowledgements
-
