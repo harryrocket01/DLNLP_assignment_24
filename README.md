@@ -8,20 +8,27 @@ This codebase is an exploration into the rabbit hole of spelling and typography 
 
 ### Dependencies
 
-The code was built in Python, within Windows 10.
+The code was built in Python, within Windows 10 & Linux.
 
 It was built within Python Version 3.9.18
 
-A range of packages were used. Including the environment file to duplicate the environment, the code was run within. The key packages used can be found below.
+A range of packages were used. Including the environment file to duplicate the environment. This can be found below within environment.ymal
+
+The code was run within this environment. 
+
+The key packages used can be found below.
 
 | Package | Version |
 | --- | --- |
-| numpy | 1.24.1 |
-| seaborn | 0.13.0 |
-| SciPy | 1.11.3 |
-| Scikit learn | 1.3.2 |
+| numpy | 1.26.4 |
+| seaborn | 0.13.2 |
+| SciPy | 1.13.0 |
+| Scikit learn | 1.4.2 |
 | Tensor Flow | 2.14.0 |
 | Tensor Addons | 0.22.0 |
+| matplotlib | 3.8.4 |
+| nlkt | 3.8.1 |
+| pyspellchecker | 0.8.1 |
 | matplotlib | 3.6.3 |
 
 ### Installing
