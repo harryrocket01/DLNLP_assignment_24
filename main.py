@@ -77,9 +77,9 @@ class FinalProject:
             self.lev()
         elif model == "norvig":
             self.norvig()
-        elif model == "seqattention":
-            self.seq_basic()
         elif model == "seqbasic":
+            self.seq_basic()
+        elif model == "seqattention":
             self.seq_attention()
         elif model == "final":
             self.final_model()
