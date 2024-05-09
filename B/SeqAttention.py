@@ -23,8 +23,6 @@ tf.get_logger().setLevel("ERROR")  # or tf.logging.set_verbosity(tf.logging.ERRO
 import tensorflow_addons as tfa
 
 tfa.options.disable_custom_kernel()
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
-from sklearn.model_selection import train_test_split
 import pandas as pd
 import os
 import time

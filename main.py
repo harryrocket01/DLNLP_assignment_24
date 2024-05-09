@@ -1,3 +1,15 @@
+"""
+The following code was written as the final project for 
+ELEC0141 Deep Learning for Natural Language Processing
+
+This is the main function, used to run and access various
+models used within this project.
+
+Author: Harry R J Softley-Graham
+Date: Jan-May 2024
+
+"""
+
 import subprocess
 import sys
 import os
@@ -19,7 +31,6 @@ from B.Plotting import *
 # from A.Model.seq_seq2 import Seq2SeqModel
 
 import pandas as pd
-import json
 
 
 class FinalProject:

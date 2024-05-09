@@ -33,21 +33,13 @@ class Levenshtein:
         corpus (set): Set of words from NLTK's corpus used for spellchecking.
 
     Methods:
-        __init__():
-            Initializes the Levenshtein object.
 
-        spellcheck(sentence):
-            Corrects misspelled words in a sentence.
-
-        test(csv_file):
-            Tests the spellcheck method on a dataset and calculates evaluation metrics.
-
-        calculate_metrics(df):
-            Calculates evaluation metrics based on original and corrected sentences.
+        spellcheck(): Corrects misspelled words in a sentence.
+        test(): Tests the spellcheck method on a dataset and calculates evaluation metrics.
+        calculate_metrics(): Calculates evaluation metrics based on original and corrected sentences.
 
     Example Usage:
-        ngram_similarity = Levenshtein()
-        results_df = ngram_similarity.test("Dataset/Test_Set.csv")
+        Levenshtein()
     """
 
     def __init__(self):
@@ -69,8 +61,7 @@ class Levenshtein:
             str: The corrected sentence.
 
         Example:
-            ngram_similarity = Levenshtein()
-            corrected_sentence = ngram_similarity.spellcheck("Say hello to my little friend.")
+            Levenshtein().spellcheck("Say hello to my little friend.")
         """
 
         split = []
@@ -193,5 +184,5 @@ class Levenshtein:
 
 if __name__ == "__main__":
     ngram_similarity = Levenshtein()
-    ngram_similarity.test("Dataset/Test_Set.csv")
-    # ngram_similarity.live_correction()
+    # ngram_similarity.test("Dataset/Test_Set.csv")
+    ngram_similarity.live_correction()

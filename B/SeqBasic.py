@@ -1,9 +1,7 @@
 import tensorflow as tf
-import tensorflow_addons as tfa
 from DataProcessing import DataProcessing
 import time
 import os
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import pandas as pd
 
 
@@ -43,7 +41,7 @@ class Seq2SeqModel:
         masked_accuracy: calculates masked accuracy
 
     Example:
-        SeqAttention()
+        SeqBasic()
 
     """
 
