@@ -43,6 +43,9 @@ class SeqAttention:
     search algorithm.
 
     Inspired and written based off existing implamentations:
+    https://github.com/Currie32/Spell-Checker
+    https://www.tensorflow.org/text/tutorials/nmt_with_attention
+    https://gist.github.com/firojalam/66bf79c3746731d85e9ea9fad7a22099
 
 
     args:
@@ -384,9 +387,9 @@ class SeqAttention:
     @tf.function
     def validation_step(self, inp, targ, enc_hidden):
         """
-        method: train_step
+        method: validation_step
 
-        Tensorflow Function optomised to perform the validation/test step pass for a given batch
+        Tensorflow Function used to perform the validation/test step pass for a given batch
 
         args:
             inp(): input tokens
@@ -425,6 +428,22 @@ class SeqAttention:
         return loss, acc, predictions
 
     def loss_function(self, real, pred):
+        """
+        method: loss_function
+
+        Utility function that calculates masked loss of a output and target
+
+        args:
+            real() : real output
+            pred() : prediciton output
+
+        return:
+            loss(float): computed loss
+
+        Example:
+            SeqAttention.loss_function(real, pred)
+
+        """
         cross_entropy = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction="none"
         )

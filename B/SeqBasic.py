@@ -8,15 +8,54 @@ import pandas as pd
 
 
 class Seq2SeqModel:
+    """
+    class: Seq2SeqModel
+
+    This class is the main class containing a basic encoder, decoder
+    model without an attention block.
+
+    It contains all of the building, training and tuning functions.
+
+    Inspired and written based off existing implamentations:
+    https://github.com/Currie32/Spell-Checker
+    https://www.tensorflow.org/text/tutorials/nmt_with_attention
+    https://gist.github.com/firojalam/66bf79c3746731d85e9ea9fad7a22099
+
+
+    args:
+        buffer (int): buffer size for data loading/shuffling
+        batch_size (int): number of setnences to run per batch
+        num_examples (int): number of exampels to load in to train set
+        learning_rate (int): learning rate of adam optomiser
+        file_dir (str): location to save checkpoints
+        train_dir (str): training set directory
+        test_dir (str): test set directory
+    methods:
+        build_model: builds the given model
+        compile_model: Compiles the given model
+        train: function to train model
+        test: function to test model on test set
+        initialize_hidden_state: QoL function used to build and
+        initalise hidden states.
+        train_step: tf train step
+        validation_step: tf validation step
+        loss_function: calualtes masked loss
+        masked_accuracy: calculates masked accuracy
+
+    Example:
+        SeqAttention()
+
+    """
+
     def __init__(
         self,
-        buffer=100000,
-        batch_size=128,
-        num_examples=1000,
-        learning_rate=0.0001,
-        file_dir="./B/training",
-        train_dir="Misspelling_Corpus.csv",
-        test_dir="Test_Set.csv",
+        buffer: int = 100000,
+        batch_size: int = 128,
+        num_examples: int = 1000,
+        learning_rate: float = 0.0001,
+        file_dir: str = "./B/training",
+        train_dir: str = "Misspelling_Corpus.csv",
+        test_dir: str = "Test_Set.csv",
     ):
         self.buffer = buffer
         self.batch_size = batch_size
@@ -45,10 +84,9 @@ class Seq2SeqModel:
         for word, index in self.inp_token.word_index.items():
             print(f"Word: {word}, Index: {index}")
 
-        # Example input batch to determine parameters
         example_input_batch, example_target_batch = next(iter(self.train_dataset))
 
-        # Some important parameters
+        # Various model perameters
         self.vocab_inp_size = len(self.inp_token.word_index) + 1
         self.vocab_tar_size = len(self.targ_token.word_index) + 1
         self.max_length_input = example_input_batch.shape[1]
@@ -61,8 +99,6 @@ class Seq2SeqModel:
         # Build and compile the model
         self.build_model()
         self.compile_model()
-
-        # Define optimizer
         self.optimizer = tf.keras.optimizers.Adam()
 
         timestamp = str(int(time.time()))
@@ -76,7 +112,21 @@ class Seq2SeqModel:
         )
 
     def build_model(self):
-        # Build the encoder
+        """
+        method: build_model
+
+        Builds the given model. Builds basic, encoder
+        decoder model.
+
+        args:
+            None
+        return:
+            None
+        Example:
+            SeqBasic.build_model()
+        """
+
+        # builds the encoder
         self.encoder_embedding = tf.keras.layers.Embedding(
             self.vocab_inp_size, self.embedding_dim
         )
@@ -84,7 +134,7 @@ class Seq2SeqModel:
             self.enc_units, return_sequences=True, return_state=True
         )
 
-        # Build the decoder
+        # builds the decoder
         self.decoder_embedding = tf.keras.layers.Embedding(
             self.vocab_tar_size, self.embedding_dim
         )
@@ -94,6 +144,19 @@ class Seq2SeqModel:
         self.fc = tf.keras.layers.Dense(self.vocab_tar_size)
 
     def compile_model(self):
+        """
+        method: compile_model
+
+        Compiles the given model. This is for the basic the encoder,
+        decoder model.
+
+        args:
+            None
+        return:
+            None
+        Example:
+            SeqBasic.compile_model()
+        """
         encoder_inputs = tf.keras.Input(shape=(None,))
         decoder_inputs = tf.keras.Input(shape=(None,))
 
@@ -112,8 +175,21 @@ class Seq2SeqModel:
         self.model = tf.keras.Model([encoder_inputs, decoder_inputs], outputs)
         self.model.compile(optimizer="adam", loss="sparse_categorical_crossentropy")
 
-    def train(self, epochs=5):
-        """Train the model"""
+    def train(self, epochs: int = 5):
+        """
+        method: train
+
+        Given a set number of epochs, it will train the current loaded model
+        on that number of epochs on the peramter set batch size.
+
+        args:
+            epochs (int): number of epochs to train algorithm.
+
+        return:
+            None
+        Example:
+            SeqBasic.train()
+        """
 
         train_loss = []
         train_acc = []
@@ -121,6 +197,7 @@ class Seq2SeqModel:
         val_accuracies = []
         epoch_time = []
 
+        # Epoch Loop
         for epoch in range(epochs):
             start = time.time()
 
@@ -128,6 +205,7 @@ class Seq2SeqModel:
             total_loss = 0
             total_accuracy = 0
 
+            # Batch Loop
             for batch, (inp, targ) in enumerate(
                 self.train_dataset.take(self.steps_per_epoch)
             ):
@@ -183,7 +261,7 @@ class Seq2SeqModel:
             )
             print("Time taken for 1 epoch {:.0f} sec\n".format(time_elapsed))
 
-            # Test pass
+        # Test pass
         test_total_loss = 0
         test_total_accuracy = 0
         num_test_batches = 0
@@ -221,6 +299,19 @@ class Seq2SeqModel:
         print("Test Loss {:.4f}, Test Accuracy {:.4f}".format(test_loss, test_acc))
 
     def initialize_hidden_state(self):
+        """
+        method: initialize_hidden_state
+
+        QoL that initialises the hidden states of the encoder/decoder when called in
+        the given format.
+
+        args:
+            None
+        return:
+            : array of hidden states of 0
+        Example:
+            SeqBasic.initialize_hidden_state()
+        """
         return [
             tf.zeros((self.batch_size, self.enc_units)),
             tf.zeros((self.batch_size, self.enc_units)),
@@ -228,6 +319,23 @@ class Seq2SeqModel:
 
     @tf.function
     def train_step(self, inp, targ, enc_hidden):
+        """
+        method: train_step
+
+        Tensorflow Function optomised to perform the train step pass for a given batch
+
+        args:
+            inp(): input tokens
+            targ(): target toakns
+            enc_hidden(): encoder hidden layer
+
+        return:
+            loss(): loss of this training step parse
+            acc(): accuracy of this traing step parse
+        Example:
+            SeqBasic.train_step(inp, targ, enc_hidden)
+
+        """
         loss = 0
         acc = 0
 
@@ -258,6 +366,24 @@ class Seq2SeqModel:
 
     @tf.function
     def validation_step(self, inp, targ, enc_hidden):
+        """
+        method: validation_step
+
+        Tensorflow Function optomised to perform the validation/test step pass for a given batch
+
+        args:
+            inp(): input tokens
+            targ(): target toakns
+            enc_hidden(): encoder hidden layer
+
+        return:
+            loss(): loss of this training step parse
+            acc(): accuracy of this traing step parse
+            predictions(): predictions of a given input
+        Example:
+            SeqBasic.validation_step(inp, targ, enc_hidden)
+
+        """
         loss = 0
         acc = 0
 
@@ -279,6 +405,23 @@ class Seq2SeqModel:
         return loss, acc, predictions
 
     def loss_function(self, real, pred):
+        """
+        method: loss_function
+
+        Utility function that calculates masked loss of a output and target
+
+
+        args:
+            real() : real output
+            pred() : prediciton output
+
+        return:
+            loss(float): computed loss
+
+        Example:
+            SeqBasic.loss_function(real, pred)
+
+        """
         cross_entropy = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction="none"
         )
@@ -292,6 +435,22 @@ class Seq2SeqModel:
         return loss
 
     def masked_accuracy(self, real, pred):
+        """
+        method: masked_accuracy
+
+        Utility function that calculates masked accuracy of a given batch
+
+        args:
+            real() : real input string
+            pred() : prediciton output string
+
+        return:
+            accuracy(): computed masked accuracy of given set of strings
+
+        Example:
+            SeqAttention.masked_accuracy(real, pred)
+
+        """
         mask = tf.math.logical_not(tf.math.equal(real, 0))
         mask = tf.cast(mask, dtype=tf.float32)
         correct_predictions = tf.cast(
