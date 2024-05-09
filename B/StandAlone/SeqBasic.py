@@ -76,9 +76,9 @@ class SeqBasic:
         self.data_processing_inst = DataProcessing()
 
         script_dir = os.path.dirname(os.path.realpath(__file__))
-        data_set_root = os.path.join(script_dir, "..", "Dataset", train_dir)
+        data_set_root = os.path.join(script_dir, "..", "..", "Dataset", train_dir)
 
-        test_set_root = os.path.join(script_dir, "..", "Dataset", test_dir)
+        test_set_root = os.path.join(script_dir, "..", "..", "Dataset", test_dir)
 
         self.train_dataset, self.val_dataset, self.inp_token, self.targ_token = (
             self.data_processing_inst.call_train_val(

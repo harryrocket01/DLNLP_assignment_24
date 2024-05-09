@@ -12,6 +12,7 @@ Date: Jan-May 2024
 
 import subprocess
 import sys
+
 import os
 import warnings
 
@@ -24,16 +25,31 @@ from B.Levenshtein import *
 from B.Norvig import *
 from B.SeqBasic import *
 from B.SeqAttention import *
-
-
 from B.Plotting import *
-
-# from A.Model.seq_seq2 import Seq2SeqModel
-
-import pandas as pd
 
 
 class FinalProject:
+    """
+    class: FinalProject
+
+    Main class that call all the models built and used within,
+    this project.
+
+    args:
+        model(str): what model should be run
+        new_dataset(bool): flag for if the dataset should be remade
+    methods:
+        create_data(): creates and download dataset
+        lev(): runs levenshtein basic algorithm
+        norvig(): runs norvig algorithm
+        seq_basic(): runs seq_basic algorithm
+        seq_attention(): runs seq attention algorithm
+        final_model(): runs the final model for the project
+        graphics(): creates graphs and graphics
+
+    Example:
+        FinalProject()
+    """
 
     def __init__(self, model: str = None, new_dataset: bool = False):
 
@@ -71,6 +87,20 @@ class FinalProject:
             self.final_model()
 
     def create_data(self, download: bool = True, overwrite: bool = False):
+        """
+        method:create_data
+
+        Creates and sets up dataset through calling data synthesizer tool.
+
+        args:
+            download (bool): flag if it should download database
+            overwrite (bool): flag if data should be overwitten with new dataset
+        return:
+            (bool): flag on functions success
+        Example:
+            FinalProject.create_data()
+        """
+
         file_name = "Misspelling_Corpus.csv"
         root = ".\Dataset\Sentences\GenericsKB-Best.tsv"
 
@@ -111,15 +141,51 @@ class FinalProject:
         return 1
 
     def lev(self):
+        """
+        method:lev
+
+        Runs the Levenshtein model and tests it.
+
+        args:
+            None
+        return:
+            None
+        Example:
+            FinalProject().lev()
+
+        """
         levenshtein = Levenshtein()
         levenshtein.test("Dataset/Test_Set.csv")
 
     def norvig(self):
+        """
+        method:norvig
+
+        Runs the norvig model and tests it.
+
+        args:
+            None
+        return:
+            None
+        Example:
+            FinalProject().norvig()
+        """
         norvig = Norvig()
         norvig.test("Dataset/Test_Set.csv")
 
     def seq_basic(self):
+        """
+        method:seq_basic
 
+        Runs the basic sequence 2 sequnce model and runs it.
+
+        args:
+            None
+        return:
+            None
+        Example:
+            FinalProject().seq_basic()
+        """
         buffer = 131072
         batch_size = 64
         num_examples = 100, 000
@@ -140,7 +206,18 @@ class FinalProject:
         inst.train(epochs=10)
 
     def seq_attention(self):
+        """
+        method:seq_attention
 
+        Runs the Sequence 2 Sequence model with attention block and tests model.
+
+        args:
+            None
+        return:
+            None
+        Example:
+            FinalProject().seq_attention()
+        """
         buffer = 131072
         batch_size = 64
         num_examples = 100, 000
@@ -167,6 +244,18 @@ class FinalProject:
         inst.train(epochs=10)
 
     def final_model(self):
+        """
+        method:final_model
+
+        Runs the Levenshtein model.
+
+        args:
+            None
+        return:
+            None
+        Example:
+            FinalProject().final_model()
+        """
         buffer = 131072
         batch_size = 64
         num_examples = 500000
@@ -194,6 +283,19 @@ class FinalProject:
         inst.test()
 
     def graphics(self):
+        """
+        method:graphics
+
+        Creates all of the plots from the given run data.
+
+        args:
+            none
+        return:
+            none
+        Example:
+            FinalProject().graphics()
+
+        """
         self.script_dir
         # Final Model
         fig, axs = Plotting().acc_loss_plot(
