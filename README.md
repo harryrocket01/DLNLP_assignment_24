@@ -59,17 +59,13 @@ python3 main.py <model_name> [new_dataset]
 ```
 
 In the second option, model_name can be selected from:
--"levenshtein"
--"norvig"
--"seqattention"
--"seqbasic"
--"final"
+"levenshtein","norvig","seqattention","seqbasic","final".
 
 and [new_dataset] is a bool if a new dataset is needed to be created.
 
 If hyperparameters want to be altered, due to the differences within the model, they can be changed and updated within the function that calls the class. Stand alone versions of each model are also present in the stand along folder, that were set aside to be run individually on a cluster within a CLI.
 
-The checkpoint and training files of the models cannot be uploaded to Git Hub, and they would corrupt it uploaded to a cloud service. Hence all the deep learning models need to be trained first. Make sure you are using the correct hardware.
+The checkpoint and training files of the models cannot be uploaded to Git Hub, and they would corrupt if uploaded to a cloud service. Hence all the deep learning models need to be trained first. Make sure you are using the correct hardware.
 
 ## Hardware and training
 
