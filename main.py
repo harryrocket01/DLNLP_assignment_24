@@ -104,8 +104,8 @@ class FinalProject:
         file_name = "Misspelling_Corpus.csv"
         root = ".\Dataset\Sentences\GenericsKB-Best.tsv"
 
-        unique_sentences = 50, 000
-        sentence_variation = 10
+        unique_sentences = 10, 000
+        sentence_variation = 50
         mistake_root = [
             ".\Dataset\\Mistakes\\en_keystroke_pairs.sorted.txt",
             ".\Dataset\\Mistakes\\aspell.dat",
